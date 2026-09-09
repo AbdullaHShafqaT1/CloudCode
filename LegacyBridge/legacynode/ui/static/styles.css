@@ -1,0 +1,171 @@
+/* ===================================================
+   LegacyNode Dashboard — Custom CSS
+   Dark theme with glassmorphism and gradient accents
+   =================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Root Variables ─────────────────────────────── */
+:root {
+    --bg-primary:   #0D1117;
+    --bg-secondary: #161B22;
+    --bg-card:      rgba(22, 27, 34, 0.85);
+    --border:       rgba(48, 54, 61, 0.8);
+    --accent-blue:  #3B82F6;
+    --accent-green: #10B981;
+    --accent-amber: #F59E0B;
+    --accent-red:   #EF4444;
+    --accent-purple:#8B5CF6;
+    --text-primary: #F0F6FC;
+    --text-muted:   #8B949E;
+    --font-main:    'Inter', -apple-system, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* ─── Global ─────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: var(--font-main) !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ─── Streamlit Overrides ───────────────────────── */
+.stApp {
+    background: linear-gradient(135deg, #0D1117 0%, #111827 60%, #0D1117 100%);
+    min-height: 100vh;
+}
+
+.stSidebar {
+    background: var(--bg-secondary) !important;
+    border-right: 1px solid var(--border);
+}
+
+/* ─── Header ─────────────────────────────────────── */
+.legacynode-header {
+    background: linear-gradient(90deg, #1C1C3C 0%, #0D1117 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+.legacynode-logo {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+/* ─── Metric Cards ───────────────────────────────── */
+.metric-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 16px rgba(59,130,246,0.15);
+}
+
+/* ─── Terminal Panel ─────────────────────────────── */
+.terminal-panel {
+    background: #0A0C10;
+    border: 1px solid #21262D;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #ABB2BF;
+    max-height: 420px;
+    overflow-y: auto;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.terminal-panel .stdout { color: #98C379; }
+.terminal-panel .stderr { color: #E06C75; }
+.terminal-panel .info   { color: #61AFEF; }
+
+/* ─── Buttons ────────────────────────────────────── */
+.stButton > button {
+    background: linear-gradient(135deg, #3B82F6, #6366F1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 22px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #2563EB, #4F46E5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(59,130,246,0.45);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* ─── Input Fields ───────────────────────────────── */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-main) !important;
+}
+
+/* ─── Tabs ───────────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+    gap: 4px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px 6px 0 0;
+    padding: 8px 18px;
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.stTabs [aria-selected="true"] {
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--accent-blue) !important;
+    background: rgba(59,130,246,0.08) !important;
+}
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363D; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3B82F6; }
+
+/* ─── Pulse Animation for RUNNING status ─────────── */
+@keyframes pulse-blue {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+.status-running { animation: pulse-blue 1.8s ease-in-out infinite; }
+
+/* ─── DataFrames / Tables ───────────────────────── */
+.stDataFrame {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px;
+}

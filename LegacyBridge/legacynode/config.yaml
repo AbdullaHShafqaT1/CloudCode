@@ -1,0 +1,71 @@
+# =============================================================
+# LegacyNode — System Configuration
+# All non-secret, structured configuration lives here.
+# Secrets (tokens, API keys) go in .env
+# =============================================================
+
+# ─── LLM / Tunnel Settings ───────────────────────────────────
+llm:
+  # Loaded from .env TUNNEL_URL at runtime; this is a local fallback for dev
+  base_url: "http://localhost:11434/v1"
+  model: "qwen2.5-coder:32b"
+  api_key: "ollama"                  # Must match LLM_API_KEY in .env
+  timeout_seconds: 180               # Per-request timeout
+  max_retries: 3                     # Retry on transient connection errors
+  retry_backoff_base: 2.0            # Exponential backoff base (seconds)
+  temperature: 0.2
+  max_tokens: 8192
+  stream: true
+
+# ─── Agent Execution Settings ─────────────────────────────────
+agent:
+  max_iterations: 25                 # Max ReAct steps per task before forced stop
+  self_correction_retries: 3        # Retries when a tool call fails
+  human_in_loop: false              # Set true to pause before each tool execution
+  system_prompt_file: null          # Optional path to a custom system prompt .txt file
+
+# ─── Workspace Sandbox ────────────────────────────────────────
+workspace:
+  root: "."                         # Relative to legacynode/ or absolute path
+  backup_dir: ".legacynode/backups" # Where file backups are stored before writes
+  max_file_size_bytes: 5242880      # 5 MB — refuse to read/write files larger than this
+  # Paths that the agent is NOT allowed to read or write (glob patterns)
+  excluded_paths:
+    - ".env"
+    - "*.env*"
+    - ".git/**"
+    - ".legacynode/**"
+    - "**/__pycache__/**"
+
+# ─── Terminal Executor Settings ───────────────────────────────
+terminal:
+  default_timeout_seconds: 30
+  max_output_bytes: 524288           # 512 KB stdout/stderr cap
+  # Commands that will be rejected immediately (substring match)
+  blocklist:
+    - "rm -rf /"
+    - "del /f /s /q C:\\"
+    - "format c:"
+    - ":(){:|:&};:"                  # Fork bomb
+    - "shutdown"
+    - "reboot"
+    - "mkfs"
+
+# ─── Notification Settings ────────────────────────────────────
+notifications:
+  db_path: ".legacynode/notifications.db"
+  max_in_memory: 100                 # Circular buffer size for in-memory notifications
+  retention_days: 7                  # Auto-purge notifications older than N days
+
+# ─── Dashboard / UI Settings ──────────────────────────────────
+ui:
+  host: "localhost"
+  port: 8501
+  page_title: "LegacyNode"
+  refresh_interval_ms: 1500          # Dashboard polling interval
+
+# ─── Logging ──────────────────────────────────────────────────
+logging:
+  level: "INFO"                      # DEBUG | INFO | WARNING | ERROR
+  format: "json"                     # json | console
+  log_file: ".legacynode/legacynode.log"

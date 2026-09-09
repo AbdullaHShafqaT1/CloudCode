@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LegacyBridge + NodeInsight — TESTING Dashboard</title>
+<meta name="description" content="Local testing dashboard for the LegacyBridge + NodeInsight + NodeLog integration. Exercise the reader pipeline against any local project directory." />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:         #0a0e1a;
+  --surface:    #111827;
+  --surface2:   #1a2235;
+  --border:     #1e2d45;
+  --border2:    #2a3f5f;
+  --text:       #e2e8f0;
+  --muted:      #64748b;
+  --accent:     #3b82f6;
+  --accent2:    #60a5fa;
+  --accent-dim: #1d4ed8;
+  --green:      #10b981;
+  --red:        #ef4444;
+  --yellow:     #f59e0b;
+  --purple:     #a855f7;
+  --cyan:       #06b6d4;
+  --code-bg:    #0a0e1a;
+  --radius:     10px;
+  --font-mono:  "JetBrains Mono", "Cascadia Code", monospace;
+  --font-ui:    "Inter", "Segoe UI", system-ui, sans-serif;
+  --shadow:     0 4px 32px rgba(0,0,0,0.6);
+  --glow:       0 0 20px rgba(59,130,246,0.15);
+  --transition: 0.15s ease;
+}
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 0 0 60px;
+  background-image: radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.04) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.04) 0%, transparent 60%);
+}
+
+/* ── Header ── */
+header {
+  background: linear-gradient(135deg, rgba(17,24,39,0.95) 0%, rgba(10,14,26,0.98) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.header-logo {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--accent-dim), var(--purple));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+}
+.header-text h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+.header-text p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.header-badge {
+  font-size: 10px; padding: 3px 10px; border-radius: 20px;
+  background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+  color: var(--accent2); letter-spacing: 0.05em; text-transform: uppercase;
+}
+.nodelog-nav-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(59,130,246,0.1));
+  border: 1px solid rgba(168,85,247,0.3);
+  color: #c4b5fd; font-size: 12px; font-weight: 600;
+  text-decoration: none; cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-ui);
+  letter-spacing: 0.02em;
+}
+.nodelog-nav-btn:hover {
+  background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(59,130,246,0.2));
+  border-color: rgba(168,85,247,0.5);
+  color: #e9d5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168,85,247,0.2);
+}
+.nodelog-badge {
+  background: rgba(168,85,247,0.2);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  color: #c4b5fd;
+}
+
+/* ── Layout ── */
+.main { max-width: 1120px; margin: 0 auto; padding: 28px 20px 0; display: grid; gap: 18px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 760px) { .row2 { grid-template-columns: 1fr; } }
+
+/* ── Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.card:focus-within { border-color: rgba(59,130,246,0.4); box-shadow: var(--glow); }
+.card-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Form controls ── */
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 90px; font-family: var(--font-mono); }
+input[type="number"] { width: 100px; }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+.input-row input[type="text"] { flex: 1; }
+.field-group   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; border-radius: 7px; cursor: pointer;
+  font-family: var(--font-ui); font-weight: 600;
+  padding: 9px 16px; font-size: 13px;
+  transition: all var(--transition);
+  white-space: nowrap; text-decoration: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--accent-dim); color: #fff; }
+.btn-primary:hover { background: var(--accent); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover { background: #233050; border-color: var(--accent); }
+.btn-run {
+  background: linear-gradient(135deg, var(--accent-dim), #6d28d9);
+  color: #fff; font-size: 14px; padding: 11px 30px;
+  border-radius: 9px; letter-spacing: 0.03em;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.25);
+}
+.btn-run:hover { box-shadow: 0 6px 24px rgba(59,130,246,0.4); transform: translateY(-1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── Status chips ── */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.chip-green  { background: rgba(16,185,129,0.1); color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+.chip-red    { background: rgba(239,68,68,0.1);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+.chip-yellow { background: rgba(245,158,11,0.1); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.chip-gray   { background: var(--surface2);      color: var(--muted);  border: 1px solid var(--border); }
+.dot-pulse { width: 7px; height: 7px; border-radius: 50%; animation: pulse 1.4s infinite; }
+.dot-green  { background: var(--green); }
+.dot-red    { background: var(--red); }
+.dot-yellow { background: var(--yellow); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── Connection status ── */
+#conn-status  { margin-top: 12px; min-height: 38px; }
+#conn-detail  { font-size: 12px; color: var(--muted); margin-top: 6px; font-family: var(--font-mono); word-break: break-all; }
+#ws-status    { margin-top: 12px; min-height: 28px; }
+#ws-detail    { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--font-mono); }
+
+/* ── Args panel ── */
+#args-panel { margin-top: 14px; display: grid; gap: 10px; }
+.arg-row { display: grid; gap: 8px; }
+.hidden { display: none !important; }
+
+/* ── Run section ── */
+.run-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+#run-status { font-size: 12px; color: var(--muted); }
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Output panel ── */
+#output-panel { display: none; }
+.output-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.meta-tag {
+  font-size: 11px; padding: 3px 9px; border-radius: 5px;
+  background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+.meta-tag strong { color: var(--text); }
+.file-block { margin-bottom: 18px; }
+.file-header {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-bottom: none; border-radius: 7px 7px 0 0;
+  padding: 8px 14px; font-size: 12px;
+}
+.file-header .file-icon { color: var(--accent2); font-size: 14px; }
+.file-header .file-path { font-family: var(--font-mono); color: var(--text); font-weight: 600; }
+.file-header .file-lines { color: var(--muted); font-size: 11px; margin-left: auto; }
+.file-content {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 0 0 7px 7px; overflow: auto; max-height: 450px;
+}
+pre.code-block {
+  padding: 16px; font-family: var(--font-mono); font-size: 12px;
+  line-height: 1.65; white-space: pre; tab-size: 4; color: var(--text);
+}
+.structured-output {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 14px; overflow: auto; max-height: 400px;
+}
+.structured-output pre { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+
+/* ── Error output ── */
+.error-box {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 7px; padding: 14px;
+  color: var(--red); font-family: var(--font-mono); font-size: 12px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.error-label { font-size: 11px; color: var(--red); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Raw JSON ── */
+details { margin-top: 14px; }
+summary {
+  cursor: pointer; font-size: 12px; color: var(--muted);
+  padding: 8px 0; user-select: none;
+  display: flex; align-items: center; gap: 6px;
+  list-style: none; outline: none;
+}
+summary::before { content: "▶"; font-size: 10px; transition: transform 0.2s; }
+details[open] summary::before { transform: rotate(90deg); }
+.raw-json {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 14px; margin-top: 8px;
+  overflow: auto; max-height: 500px;
+}
+.raw-json pre { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre; }
+.j-key  { color: #7dd3fc; }
+.j-str  { color: #a5d6ff; }
+.j-num  { color: #fde68a; }
+.j-bool { color: #c4b5fd; }
+.j-null { color: var(--muted); }
+
+/* ── Timing bar ── */
+.timing-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; font-size: 12px; color: var(--muted);
+}
+.timing-bar .t-val { color: var(--text); font-weight: 700; font-family: var(--font-mono); }
+
+/* ── History ── */
+#history-log { max-height: 180px; overflow-y: auto; }
+.history-entry {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 6px 8px; border-bottom: 1px solid rgba(30,45,69,0.5);
+  font-size: 11px; cursor: pointer;
+  transition: background var(--transition);
+  border-radius: 4px;
+}
+.history-entry:hover { background: var(--surface2); }
+.history-entry .h-time { color: var(--muted); white-space: nowrap; }
+.history-entry .h-action { color: var(--accent2); font-family: var(--font-mono); white-space: nowrap; }
+.history-entry .h-path { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 20px 0; }
+
+/* ── NodeLog live mini strip ── */
+#nodelog-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.strip-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.strip-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.strip-count {
+  margin-left: auto;
+  font-size: 11px; color: var(--accent2); font-family: var(--font-mono);
+  padding: 2px 8px; background: rgba(59,130,246,0.1);
+  border-radius: 10px; border: 1px solid rgba(59,130,246,0.2);
+}
+#strip-events { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+.strip-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 4px 8px; border-radius: 5px;
+  font-size: 11px; font-family: var(--font-mono);
+  background: rgba(255,255,255,0.02);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.strip-row .sl { font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 700; min-width: 52px; text-align: center; }
+.sl-DEBUG    { background: rgba(100,116,139,0.2); color: #94a3b8; }
+.sl-INFO     { background: rgba(59,130,246,0.2);  color: #60a5fa; }
+.sl-WARN, .sl-WARNING { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.sl-ERROR, .sl-FAIL   { background: rgba(239,68,68,0.2);  color: #f87171; }
+.sl-SUCCESS, .sl-PASS { background: rgba(16,185,129,0.2); color: #34d399; }
+.sl-CRITICAL { background: rgba(168,85,247,0.2); color: #c084fc; }
+.strip-row .sm { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.strip-row .ss { color: var(--muted); font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+.strip-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px 0; }
+
+/* ── Scroll to top ── */
+#scroll-top {
+  position: fixed; bottom: 24px; right: 24px;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent-dim); color: #fff;
+  border: none; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow);
+  opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+#scroll-top.visible { opacity: 1; pointer-events: auto; }
+hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">⚡</div>
+  <div class="header-text">
+    <h1>LegacyBridge + NodeInsight</h1>
+    <p>TESTING Dashboard — NodeLog Integrated — Port 7491</p>
+  </div>
+  <div class="header-actions">
+    <a class="nodelog-nav-btn" href="/nodelog" id="btn-nodelog-nav">
+      📋 NodeLog <span class="nodelog-badge" id="nav-event-count">0</span>
+    </a>
+    <span class="header-badge">TESTING</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── Row 1: Backend URL + Project Root ── -->
+  <div class="row2">
+
+    <!-- Backend / Tunnel URL -->
+    <div class="card" id="card-url">
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Backend / Tunnel URL</div>
+      <label for="backend-url">Remote endpoint (Cloudflare, Ollama, etc.)</label>
+      <div class="input-row">
+        <input type="text" id="backend-url"
+               value="https://superintendent-navigator-wholesale-divine.trycloudflare.com"
+               spellcheck="false" autocomplete="off" />
+        <button class="btn btn-secondary btn-sm" id="btn-test-conn" onclick="testConnection()">Test Connection</button>
+      </div>
+      <div id="conn-status"></div>
+      <div id="conn-detail"></div>
+    </div>
+
+    <!-- Project Root -->
+    <div class="card" id="card-root">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Project Root Directory</div>
+      <label for="project-root">Absolute path to the project you want to inspect</label>
+      <div class="input-row">
+        <input type="text" id="project-root"
+               placeholder="C:\Users\Acer\Desktop\projects\MyProject"
+               spellcheck="false" autocomplete="off"
+               oninput="clearWsStatus()" />
+        <button class="btn btn-secondary btn-sm" id="btn-validate-ws" onclick="validateWorkspace()">Validate</button>
+      </div>
+      <div id="ws-status"></div>
+      <div id="ws-detail"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Action Builder ── -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Reader Action</div>
+
+    <div class="field-group">
+      <div>
+        <label for="action-select">NodeInsight Action</label>
+        <select id="action-select" onchange="onActionChange()">
+          <option value="read_file">read_file — Read file content (full or line range)</option>
+          <option value="read_file_chunked">read_file_chunked — Paginated read for large files</option>
+          <option value="parse_ast">parse_ast — Extract classes, functions, imports via AST</option>
+          <option value="list_dir">list_dir — List directory contents</option>
+          <option value="search_files">search_files — Find files by name or glob pattern</option>
+          <option value="search_in_file">search_in_file — Search literal string or regex within a file</option>
+          <option value="search_symbols">search_symbols — Find class/function/method symbols (project-wide)</option>
+          <option value="read_structured">read_structured — Parse JSON / YAML / Markdown</option>
+        </select>
+      </div>
+      <div>
+        <label>Action description</label>
+        <div id="action-desc" style="font-size:12px;color:var(--muted);padding:9px 12px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;min-height:39px;line-height:1.5;">
+          Read file content. Optionally specify start_line / end_line for a line range.
+        </div>
+      </div>
+    </div>
+
+    <div id="args-panel">
+      <hr />
+      <div class="arg-row" id="arg-path">
+        <label for="arg-path-val">path <span style="color:var(--red)">*</span> — relative to project root</label>
+        <input type="text" id="arg-path-val" placeholder="src/main.py  or  .  for project root" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="arg-row hidden" id="arg-query">
+        <label for="arg-query-val">query — file name / glob / symbol name</label>
+        <input type="text" id="arg-query-val" placeholder="*.py  or  Calculator  or  login" spellcheck="false" />
+      </div>
+      <div class="arg-row hidden" id="arg-pattern">
+        <label for="arg-pattern-val">pattern — literal string or regex to search within the file</label>
+        <input type="text" id="arg-pattern-val" placeholder="def login  or  ^import" spellcheck="false" />
+      </div>
+      <div class="arg-row hidden" id="arg-lines">
+        <label>Line range (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="arg-start-line" placeholder="start" min="1" style="width:90px" />
+          <span style="color:var(--muted)">to</span>
+          <input type="number" id="arg-end-line" placeholder="end" min="1" style="width:90px" />
+        </div>
+      </div>
+      <div class="arg-row hidden" id="arg-recursive">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+          <input type="checkbox" id="arg-recursive-val" style="width:auto;accent-color:var(--accent)" />
+          recursive — include all subdirectories
+        </label>
+      </div>
+      <div class="arg-row hidden" id="arg-chunk">
+        <label>Chunk parameters</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--muted)">chunk_size:</span>
+          <input type="number" id="arg-chunk-size" placeholder="100" min="10" style="width:90px" />
+          <span style="font-size:12px;color:var(--muted)">offset_line:</span>
+          <input type="number" id="arg-chunk-index" placeholder="1" min="1" style="width:90px" />
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <label for="notes-field">Notes (not sent anywhere — for your reference)</label>
+      <textarea id="notes-field" placeholder="e.g. Find the user authentication file.&#10;Locate the database configuration."></textarea>
+    </div>
+
+    <hr style="margin-top:18px" />
+    <div class="run-bar" style="margin-top:14px">
+      <button class="btn btn-run" id="btn-run" onclick="runAction()">▶ Run Action</button>
+      <div class="spinner" id="spinner"></div>
+      <span id="run-status"></span>
+    </div>
+  </div>
+
+  <!-- ── Output Panel ── -->
+  <div class="card" id="output-panel">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span>Result</div>
+    <div id="output-body"></div>
+  </div>
+
+  <!-- ── Row 2: History + NodeLog Live Strip ── -->
+  <div class="row2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Request History</div>
+      <div id="history-log"><div class="history-empty">No requests yet.</div></div>
+    </div>
+
+    <div id="nodelog-strip">
+      <div class="strip-header">
+        <span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--cyan);flex-shrink:0"></span>
+        <span class="strip-title">NodeLog — Live Events</span>
+        <span class="strip-count" id="strip-count">0 events</span>
+      </div>
+      <div id="strip-events"><div class="strip-empty">No events yet.</div></div>
+      <div style="margin-top:10px;text-align:right">
+        <a href="/nodelog" class="btn btn-secondary btn-sm" style="font-size:11px">Open Full NodeLog Dashboard →</a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+/* ── Constants ── */
+const API   = "http://127.0.0.1:7491";
+const DESCS = {
+  read_file:        "Read file content. Optionally specify start_line / end_line for a line range.",
+  read_file_chunked:"Paginated read for large files. Use chunk_size and offset_line.",
+  parse_ast:        "Extract classes, functions, imports, and import graph via Python AST.",
+  list_dir:         "List directory contents. Enable 'recursive' to include all subdirectories.",
+  search_files:     "Find files by name or glob pattern within the project root.",
+  search_in_file:   "Search for a literal string or regex pattern within a specific file.",
+  search_symbols:   "Find class, function, and method symbols across all Python files.",
+  read_structured:  "Parse JSON, YAML, or Markdown files into structured data.",
+};
+
+let _history = [];
+
+/* ── Action selector ── */
+function onActionChange() {
+  const a = document.getElementById("action-select").value;
+  document.getElementById("action-desc").textContent = DESCS[a] || "";
+  const H = (id, show) => document.getElementById(id).classList.toggle("hidden", !show);
+  H("arg-path",      !["search_symbols"].includes(a));
+  H("arg-query",     ["search_files","search_symbols"].includes(a));
+  H("arg-pattern",   a === "search_in_file");
+  H("arg-lines",     a === "read_file");
+  H("arg-recursive", a === "list_dir");
+  H("arg-chunk",     a === "read_file_chunked");
+}
+
+/* ── Test connection ── */
+async function testConnection() {
+  const url = document.getElementById("backend-url").value.trim();
+  if (!url) { setConnStatus("chip-yellow", "⚠ Enter a URL first."); return; }
+
+  setBtnState("btn-test-conn", true, "Testing…");
+  setConnStatus("chip-gray", "Connecting…", true);
+
+  try {
+    const r = await fetch(`${API}/api/health`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ url })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      setConnStatus("chip-green", `✓ Connected — HTTP ${d.status_code} · ${d.latency_ms}ms`);
+      document.getElementById("conn-detail").textContent = `${d.url}  ·  ${d.content_type || "no content-type"}`;
+    } else {
+      setConnStatus("chip-red", `✗ ${d.message}`);
+      document.getElementById("conn-detail").textContent = d.url || url;
+    }
+  } catch(e) {
+    setConnStatus("chip-red", `✗ Server error: ${e.message}`);
+  }
+  setBtnState("btn-test-conn", false, "Test Connection");
+}
+
+/* ── Validate workspace ── */
+async function validateWorkspace() {
+  const root = document.getElementById("project-root").value.trim();
+  if (!root) { setWsStatus("chip-yellow", "⚠ Enter a path first."); return; }
+
+  setBtnState("btn-validate-ws", true, "Validating…");
+  setWsStatus("chip-gray", "Checking…", true);
+
+  try {
+    const url = `${API}/api/validate?workspace_root=${encodeURIComponent(root)}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.ok) {
+      const items = d.data?.data?.entries?.length ?? "?";
+      setWsStatus("chip-green", `✓ Valid — ${items} entries · ${d.latency_ms}ms`);
+      document.getElementById("ws-detail").textContent = d.resolved_root || root;
+    } else {
+      setWsStatus("chip-red", `✗ ${d.error || "Validation failed"}`);
+      document.getElementById("ws-detail").textContent = d.resolved_root || root;
+    }
+  } catch(e) {
+    setWsStatus("chip-red", `✗ Server error: ${e.message}`);
+  }
+  setBtnState("btn-validate-ws", false, "Validate");
+}
+
+function clearWsStatus() {
+  document.getElementById("ws-status").innerHTML = "";
+  document.getElementById("ws-detail").textContent = "";
+}
+
+/* ── Run action ── */
+async function runAction() {
+  const root   = document.getElementById("project-root").value.trim();
+  const action = document.getElementById("action-select").value;
+  if (!root) { alert("Please enter a Project Root path first."); return; }
+
+  const body = { workspace_root: root, action };
+  const pathVal = document.getElementById("arg-path-val").value.trim();
+  if (pathVal) body.path = pathVal;
+  const q = document.getElementById("arg-query-val").value.trim();
+  if (q) body.query = q;
+  const pat = document.getElementById("arg-pattern-val").value.trim();
+  if (pat) body.pattern = pat;
+  const sl = document.getElementById("arg-start-line").value;
+  const el = document.getElementById("arg-end-line").value;
+  if (sl) body.start_line = parseInt(sl);
+  if (el) body.end_line   = parseInt(el);
+  if (!document.getElementById("arg-recursive").classList.contains("hidden"))
+    body.recursive = document.getElementById("arg-recursive-val").checked;
+  const cs = document.getElementById("arg-chunk-size").value;
+  const ci = document.getElementById("arg-chunk-index").value;
+  if (cs) body.chunk_size   = parseInt(cs);
+  if (ci) body.offset_line  = parseInt(ci);
+
+  setBtnState("btn-run", true, "Running…");
+  document.getElementById("spinner").style.display = "block";
+  document.getElementById("run-status").textContent = "Dispatching…";
+  document.getElementById("output-panel").style.display = "none";
+
+  const t0 = performance.now();
+  try {
+    const r = await fetch(`${API}/api/reader`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    const ms = (performance.now() - t0).toFixed(0);
+
+    document.getElementById("run-status").textContent = "";
+    renderOutput(d, action, pathVal, ms);
+    addHistory(action, pathVal, d.ok, ms);
+  } catch(e) {
+    document.getElementById("run-status").textContent = `Error: ${e.message}`;
+    renderError(e.message);
+  }
+  setBtnState("btn-run", false, "▶ Run Action");
+  document.getElementById("spinner").style.display = "none";
+}
+
+/* ── Render output ── */
+function renderOutput(d, action, pathVal, ms) {
+  const panel = document.getElementById("output-panel");
+  const body  = document.getElementById("output-body");
+  panel.style.display = "block";
+
+  const metaHtml = `
+    <div class="output-meta">
+      <span class="meta-tag">action: <strong>${action}</strong></span>
+      <span class="meta-tag">path: <strong>${pathVal || "(none)"}</strong></span>
+      <span class="meta-tag">latency: <strong>${d.latency_ms ?? ms}ms</strong></span>
+      <span class="chip ${d.ok ? "chip-green":"chip-red"}">${d.ok ? "✓ OK":"✗ ERROR"}</span>
+    </div>`;
+
+  if (!d.ok) {
+    body.innerHTML = metaHtml + `
+      <div class="error-label">Error</div>
+      <div class="error-box">${esc(d.error || "Unknown error")}\n${esc(d.detail || "")}</div>`;
+    return;
+  }
+
+  const inner = d.data?.data;
+  let contentHtml = "";
+
+  if (action === "read_file" && inner?.content !== undefined) {
+    const lines = inner.content.split("\n").length;
+    contentHtml = `
+      <div class="file-block">
+        <div class="file-header">
+          <span class="file-icon">📄</span>
+          <span class="file-path">${esc(inner.path || pathVal)}</span>
+          <span class="file-lines">${lines} lines</span>
+        </div>
+        <div class="file-content"><pre class="code-block">${esc(inner.content)}</pre></div>
+      </div>`;
+  } else if (action === "list_dir" && inner?.entries) {
+    const rows = inner.entries.map(e =>
+      `<tr><td style="padding:4px 10px;font-family:var(--font-mono);font-size:12px">${e.is_dir ? "📁" : "📄"} ${esc(e.name)}</td>
+       <td style="padding:4px 10px;color:var(--muted);font-size:11px">${e.is_dir ? "dir" : fmtSize(e.size)}</td></tr>`
+    ).join("");
+    contentHtml = `<table style="width:100%;border-collapse:collapse">${rows}</table>`;
+    contentHtml = `<div class="structured-output">${contentHtml}</div>`;
+  } else if (action === "parse_ast" && inner) {
+    contentHtml = `<div class="structured-output"><pre>${esc(JSON.stringify(inner, null, 2))}</pre></div>`;
+  } else {
+    contentHtml = `<div class="structured-output"><pre>${esc(JSON.stringify(inner ?? d.data, null, 2))}</pre></div>`;
+  }
+
+  const timingHtml = `
+    <div class="timing-bar" style="margin-top:12px">
+      ⏱ Latency: <span class="t-val">${d.latency_ms ?? ms}ms</span>
+      · Timestamp: <span class="t-val">${d.timestamp ?? new Date().toISOString()}</span>
+    </div>`;
+
+  body.innerHTML = metaHtml + contentHtml + timingHtml + `
+    <details>
+      <summary>🔍 Raw JSON Response</summary>
+      <div class="raw-json"><pre>${syntaxHL(JSON.stringify(d, null, 2))}</pre></div>
+    </details>`;
+}
+
+function renderError(msg) {
+  const panel = document.getElementById("output-panel");
+  panel.style.display = "block";
+  document.getElementById("output-body").innerHTML = `
+    <div class="error-label">Client Error</div>
+    <div class="error-box">${esc(msg)}</div>`;
+}
+
+/* ── History ── */
+function addHistory(action, path, ok, ms) {
+  const t = new Date().toLocaleTimeString();
+  _history.unshift({ action, path, ok, ms, t });
+  if (_history.length > 30) _history.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const el = document.getElementById("history-log");
+  if (!_history.length) { el.innerHTML = `<div class="history-empty">No requests yet.</div>`; return; }
+  el.innerHTML = _history.map((h, i) => `
+    <div class="history-entry" onclick="restoreHistory(${i})">
+      <span class="h-time">${h.t}</span>
+      <span class="chip ${h.ok?"chip-green":"chip-red"}" style="font-size:10px">${h.ok?"✓":"✗"}</span>
+      <span class="h-action">${h.action}</span>
+      <span class="h-path">${h.path || ""}</span>
+      <span style="color:var(--muted);font-size:11px;white-space:nowrap">${h.ms}ms</span>
+    </div>`).join("");
+}
+function restoreHistory(i) {
+  const h = _history[i];
+  if (!h) return;
+  document.getElementById("action-select").value = h.action;
+  onActionChange();
+  document.getElementById("arg-path-val").value = h.path || "";
+}
+
+/* ── NodeLog live strip ── */
+let _stripLastSeq = 0;
+async function updateStrip() {
+  try {
+    const r = await fetch(`${API}/api/nodelog/events?limit=8`);
+    const d = await r.json();
+    if (!d.ok) return;
+    const events = d.events || [];
+    document.getElementById("strip-count").textContent = `${d.count} event${d.count !== 1 ? "s" : ""}`;
+    document.getElementById("nav-event-count").textContent = d.count;
+    const el = document.getElementById("strip-events");
+    if (!events.length) { el.innerHTML = `<div class="strip-empty">No events yet.</div>`; return; }
+    const latest = events.slice(-8).reverse();
+    el.innerHTML = latest.map(e => `
+      <div class="strip-row">
+        <span class="sl sl-${e.status_level}">${e.status_level}</span>
+        <span class="ss">${e.source}</span>
+        <span class="sm">${esc(e.message)}</span>
+      </div>`).join("");
+  } catch(e) { /* server not started yet */ }
+}
+setInterval(updateStrip, 2500);
+updateStrip();
+
+/* ── Helpers ── */
+function esc(s) { return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmtSize(b) { if (!b) return ""; if (b < 1024) return b + " B"; if (b < 1024*1024) return (b/1024).toFixed(1) + " KB"; return (b/1024/1024).toFixed(2) + " MB"; }
+function setConnStatus(cls, msg, spinner) {
+  document.getElementById("conn-status").innerHTML =
+    `<span class="chip ${cls}">${spinner ? `<span class="dot-pulse dot-yellow"></span>` : ""}${msg}</span>`;
+  if (!spinner) document.getElementById("conn-detail").textContent = "";
+}
+function setWsStatus(cls, msg, spinner) {
+  document.getElementById("ws-status").innerHTML =
+    `<span class="chip ${cls}">${spinner ? `<span class="dot-pulse dot-yellow"></span>` : ""}${msg}</span>`;
+}
+function setBtnState(id, disabled, label) {
+  const b = document.getElementById(id);
+  b.disabled = disabled;
+  b.textContent = label;
+}
+function syntaxHL(json) {
+  return esc(json).replace(/("(?:[^"\\]|\\.)*")(\s*:)/g, `<span class="j-key">$1</span>$2`)
+    .replace(/:\s*("(?:[^"\\]|\\.)*")/g, `: <span class="j-str">$1</span>`)
+    .replace(/:\s*(\d+\.?\d*)/g, `: <span class="j-num">$1</span>`)
+    .replace(/:\s*(true|false)/g, `: <span class="j-bool">$1</span>`)
+    .replace(/:\s*(null)/g, `: <span class="j-null">$1</span>`);
+}
+
+/* ── Scroll-to-top ── */
+window.addEventListener("scroll", () => {
+  document.getElementById("scroll-top").classList.toggle("visible", window.scrollY > 300);
+});
+
+/* ── Init ── */
+onActionChange();
+</script>
+</body>
+</html>

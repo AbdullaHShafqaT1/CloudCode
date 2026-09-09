@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LegacyBridge + NodeInsight — Local Test UI</title>
+<meta name="description" content="Local testing dashboard for the LegacyBridge + NodeInsight integration. Manually exercise the reader pipeline against any local project directory." />
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --accent:    #58a6ff;
+    --accent-dim:#1f6feb;
+    --green:     #3fb950;
+    --red:       #f85149;
+    --yellow:    #d29922;
+    --orange:    #e3b341;
+    --purple:    #bc8cff;
+    --code-bg:   #0d1117;
+    --radius:    8px;
+    --font-mono: "Cascadia Code", "Fira Code", "Consolas", monospace;
+    --font-ui:   "Inter", "Segoe UI", system-ui, sans-serif;
+    --shadow:    0 4px 24px rgba(0,0,0,0.4);
+    --transition: 0.15s ease;
+  }
+  html { font-size: 14px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Layout ── */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent-dim), var(--purple));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .header-text h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+  .header-text p  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .header-badge {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #1c2128;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 0; display: grid; gap: 18px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .row2 { grid-template-columns: 1fr; } }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color var(--transition);
+  }
+  .card:focus-within { border-color: var(--accent); }
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── Form controls ── */
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  input[type="text"], input[type="number"], select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  input[type="text"]:focus, input[type="number"]:focus,
+  select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
+  }
+  select { cursor: pointer; appearance: auto; }
+  textarea { resize: vertical; min-height: 90px; font-family: var(--font-mono); }
+  input[type="number"] { width: 100px; }
+  .input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .input-row input[type="text"] { flex: 1; }
+  .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-group-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: none; border-radius: 6px; cursor: pointer;
+    font-family: var(--font-ui); font-weight: 600;
+    padding: 9px 16px; font-size: 13px;
+    transition: background var(--transition), transform var(--transition), opacity var(--transition);
+    white-space: nowrap; text-decoration: none;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent-dim); color: #fff; }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-secondary { background: #21262d; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: #30363d; }
+  .btn-success { background: #1a4d2e; color: var(--green); border: 1px solid #2ea043; }
+  .btn-success:hover { background: #1f5c37; }
+  .btn-run {
+    background: linear-gradient(135deg, var(--accent-dim), #553098);
+    color: #fff; font-size: 14px; padding: 11px 28px;
+    border-radius: 8px; letter-spacing: 0.03em;
+    box-shadow: 0 2px 12px rgba(31,111,235,0.3);
+  }
+  .btn-run:hover { box-shadow: 0 4px 20px rgba(88,166,255,0.4); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* ── Status chips ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .chip-green  { background: #1a4d2e; color: var(--green);  border: 1px solid #2ea043; }
+  .chip-red    { background: #2d1b1b; color: var(--red);    border: 1px solid #d73a49; }
+  .chip-yellow { background: #2d2008; color: var(--yellow); border: 1px solid #9a6700; }
+  .chip-gray   { background: #21262d; color: var(--muted);  border: 1px solid var(--border); }
+  .dot-pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    animation: pulse 1.4s infinite;
+  }
+  .dot-green  { background: var(--green); }
+  .dot-red    { background: var(--red); }
+  .dot-yellow { background: var(--yellow); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Connection status area ── */
+  #conn-status { margin-top: 10px; min-height: 38px; }
+  #conn-detail {
+    font-size: 12px; color: var(--muted); margin-top: 6px;
+    font-family: var(--font-mono); word-break: break-all;
+  }
+
+  /* ── Workspace status ── */
+  #ws-status { margin-top: 10px; min-height: 28px; }
+  #ws-detail { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--font-mono); }
+
+  /* ── Action args area ── */
+  #args-panel { margin-top: 14px; display: grid; gap: 10px; }
+  .arg-row { display: grid; gap: 8px; }
+  .hidden { display: none !important; }
+
+  /* ── Run section ── */
+  .run-bar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  #run-status { font-size: 12px; color: var(--muted); }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Output panel ── */
+  #output-panel { display: none; }
+  .output-meta {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 14px;
+  }
+  .meta-tag {
+    font-size: 11px; padding: 3px 9px; border-radius: 5px;
+    background: #21262d; color: var(--muted); border: 1px solid var(--border);
+    font-family: var(--font-mono);
+  }
+  .meta-tag strong { color: var(--text); }
+  .file-block { margin-bottom: 18px; }
+  .file-block:last-child { margin-bottom: 0; }
+  .file-header {
+    display: flex; align-items: center; gap: 10px;
+    background: #1c2128; border: 1px solid var(--border);
+    border-bottom: none; border-radius: 6px 6px 0 0;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+  .file-header .file-icon { color: var(--accent); font-size: 14px; }
+  .file-header .file-path { font-family: var(--font-mono); color: var(--text); font-weight: 600; }
+  .file-header .file-lines { color: var(--muted); font-size: 11px; margin-left: auto; }
+  .file-content {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px; overflow: auto;
+    max-height: 420px;
+  }
+  pre.code-block {
+    padding: 16px; font-family: var(--font-mono); font-size: 12px;
+    line-height: 1.65; white-space: pre; tab-size: 4;
+    color: var(--text);
+  }
+  .structured-output {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px; overflow: auto; max-height: 400px;
+  }
+  .structured-output pre { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+
+  /* ── Error output ── */
+  .error-box {
+    background: #2d1b1b; border: 1px solid #d73a49;
+    border-radius: 6px; padding: 14px;
+    color: var(--red); font-family: var(--font-mono); font-size: 12px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .error-label { font-size: 11px; color: var(--red); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ── Raw response ── */
+  details { margin-top: 14px; }
+  summary {
+    cursor: pointer; font-size: 12px; color: var(--muted);
+    padding: 8px 0; user-select: none;
+    display: flex; align-items: center; gap: 6px;
+    list-style: none; outline: none;
+  }
+  summary::before { content: "▶"; font-size: 10px; transition: transform 0.2s; }
+  details[open] summary::before { transform: rotate(90deg); }
+  .raw-json {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px; margin-top: 8px;
+    overflow: auto; max-height: 500px;
+  }
+  .raw-json pre { font-family: var(--font-mono); font-size: 11.5px; color: var(--text); white-space: pre; }
+
+  /* ── JSON syntax highlighting ── */
+  .j-key    { color: #79c0ff; }
+  .j-str    { color: #a5d6ff; }
+  .j-num    { color: #f2cc60; }
+  .j-bool   { color: var(--purple); }
+  .j-null   { color: var(--muted); }
+
+  /* ── Timing bar ── */
+  .timing-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: #1c2128; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 12px; color: var(--muted);
+  }
+  .timing-bar .t-val { color: var(--text); font-weight: 700; font-family: var(--font-mono); }
+
+  /* ── History log ── */
+  #history-log { max-height: 180px; overflow-y: auto; }
+  .history-entry {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 6px 0; border-bottom: 1px solid #1c2128;
+    font-size: 11px; cursor: pointer;
+    transition: background var(--transition);
+    border-radius: 4px; padding: 6px 8px;
+  }
+  .history-entry:hover { background: #1c2128; }
+  .history-entry .h-time { color: var(--muted); white-space: nowrap; }
+  .history-entry .h-status { flex-shrink: 0; }
+  .history-entry .h-action { color: var(--accent); font-family: var(--font-mono); white-space: nowrap; }
+  .history-entry .h-path { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 20px 0; }
+
+  /* ── Scroll to top ── */
+  #scroll-top {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent-dim); color: #fff;
+    border: none; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  #scroll-top.visible { opacity: 1; pointer-events: auto; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">⚡</div>
+  <div class="header-text">
+    <h1>LegacyBridge + NodeInsight</h1>
+    <p>Local Integration Testing Dashboard</p>
+  </div>
+  <span class="header-badge">Test UI</span>
+</header>
+
+<div class="main">
+
+  <!-- ── Row 1: Backend URL + Project Root ── -->
+  <div class="row2">
+
+    <!-- Backend / Tunnel URL -->
+    <div class="card" id="card-url">
+      <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>Backend / Tunnel URL</div>
+      <label for="backend-url">Remote endpoint (Cloudflare, Ollama, etc.)</label>
+      <div class="input-row">
+        <input type="text" id="backend-url" placeholder="https://xxxxx.trycloudflare.com"
+               spellcheck="false" autocomplete="off" />
+        <button class="btn btn-secondary btn-sm" id="btn-test-conn" onclick="testConnection()">Test Connection</button>
+      </div>
+      <div id="conn-status"></div>
+      <div id="conn-detail"></div>
+    </div>
+
+    <!-- Project Root -->
+    <div class="card" id="card-root">
+      <div class="card-title"><span class="dot" style="background:var(--green)"></span>Project Root Directory</div>
+      <label for="project-root">Absolute path to the project you want to inspect</label>
+      <div class="input-row">
+        <input type="text" id="project-root"
+               placeholder="C:\Users\Acer\Desktop\projects\MyProject"
+               spellcheck="false" autocomplete="off"
+               oninput="clearWsStatus()" />
+        <button class="btn btn-secondary btn-sm" id="btn-validate-ws" onclick="validateWorkspace()">Validate</button>
+      </div>
+      <div id="ws-status"></div>
+      <div id="ws-detail"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Action Builder ── -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Reader Action</div>
+
+    <div class="field-group">
+      <div>
+        <label for="action-select">NodeInsight Action</label>
+        <select id="action-select" onchange="onActionChange()">
+          <option value="read_file">read_file — Read file content (full or line range)</option>
+          <option value="read_file_chunked">read_file_chunked — Paginated read for large files</option>
+          <option value="parse_ast">parse_ast — Extract classes, functions, imports via Python AST</option>
+          <option value="list_dir">list_dir — List directory contents</option>
+          <option value="search_files">search_files — Find files by name or glob pattern</option>
+          <option value="search_in_file">search_in_file — Search literal string or regex within a file</option>
+          <option value="search_symbols">search_symbols — Find class/function/method symbols (project-wide)</option>
+          <option value="read_structured">read_structured — Parse JSON / YAML / Markdown into structured data</option>
+        </select>
+      </div>
+      <div>
+        <label>Action description</label>
+        <div id="action-desc" style="font-size:12px;color:var(--muted);padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;min-height:39px;line-height:1.5;">
+          Read file content. Optionally specify start_line / end_line for a line range.
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic arg fields -->
+    <div id="args-panel">
+      <hr />
+
+      <!-- path — shown for most actions -->
+      <div class="arg-row" id="arg-path">
+        <label for="arg-path-val">path <span style="color:var(--red)">*</span> — relative to project root</label>
+        <input type="text" id="arg-path-val" placeholder="src/main.py  or  .  for project root" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <!-- query — search_files, search_symbols -->
+      <div class="arg-row hidden" id="arg-query">
+        <label for="arg-query-val">query — file name / glob / symbol name</label>
+        <input type="text" id="arg-query-val" placeholder="*.py  or  Calculator  or  login" spellcheck="false" />
+      </div>
+
+      <!-- pattern — search_in_file -->
+      <div class="arg-row hidden" id="arg-pattern">
+        <label for="arg-pattern-val">pattern — literal string or regex to search within the file</label>
+        <input type="text" id="arg-pattern-val" placeholder="def login  or  ^import" spellcheck="false" />
+      </div>
+
+      <!-- line range — read_file -->
+      <div class="arg-row hidden" id="arg-lines">
+        <label>Line range (optional — leave blank for full file)</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="arg-start-line" placeholder="start" min="1" style="width:90px" />
+          <span style="color:var(--muted)">to</span>
+          <input type="number" id="arg-end-line" placeholder="end" min="1" style="width:90px" />
+        </div>
+      </div>
+
+      <!-- recursive — list_dir -->
+      <div class="arg-row hidden" id="arg-recursive">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+          <input type="checkbox" id="arg-recursive-val" style="width:auto;accent-color:var(--accent)" />
+          recursive — include all subdirectories
+        </label>
+      </div>
+
+      <!-- chunk — read_file_chunked -->
+      <div class="arg-row hidden" id="arg-chunk">
+        <label>Chunk parameters</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--muted)">chunk_size:</span>
+          <input type="number" id="arg-chunk-size" placeholder="100" min="10" style="width:90px" />
+          <span style="font-size:12px;color:var(--muted)">offset_line:</span>
+          <input type="number" id="arg-chunk-index" placeholder="1" min="1" style="width:90px" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div style="margin-top:14px">
+      <label for="notes-field">Instruction / Notes (for your own reference — not parsed or sent to any LLM)</label>
+      <textarea id="notes-field" placeholder="e.g. Find the file responsible for user authentication.&#10;Find all files containing the login API.&#10;Locate the database configuration."></textarea>
+    </div>
+
+  </div>
+
+  <!-- ── Run ── -->
+  <div class="card">
+    <div class="run-bar">
+      <button class="btn btn-run" id="btn-run" onclick="runReader()">
+        ▶&nbsp; Run Reader
+      </button>
+      <div class="spinner" id="spinner"></div>
+      <span id="run-status"></span>
+      <button class="btn btn-secondary btn-sm" id="btn-clear" onclick="clearOutput()" style="margin-left:auto">Clear Output</button>
+    </div>
+  </div>
+
+  <!-- ── Output Panel ── -->
+  <div class="card" id="output-panel">
+
+    <div class="card-title"><span class="dot" style="background:var(--green)" id="output-dot"></span>
+      <span id="output-title">Reader Output</span>
+    </div>
+
+    <!-- Timing bar -->
+    <div class="timing-bar" id="timing-bar">
+      <span>Action: <span class="t-val" id="t-action">—</span></span>
+      <span>|</span>
+      <span>Path: <span class="t-val" id="t-path">—</span></span>
+      <span>|</span>
+      <span>Latency: <span class="t-val" id="t-latency">—</span></span>
+      <span>|</span>
+      <span>Status: <span id="t-status-chip"></span></span>
+    </div>
+
+    <!-- Main output area -->
+    <div id="output-body" style="margin-top:14px"></div>
+
+    <!-- Raw response -->
+    <details id="raw-details">
+      <summary>Raw Response (BridgeResult JSON)</summary>
+      <div class="raw-json"><pre id="raw-json-content"></pre></div>
+    </details>
+
+  </div>
+
+  <!-- ── Request History ── -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--purple)"></span>Request History</div>
+    <div id="history-log"><div class="history-empty">No requests yet.</div></div>
+  </div>
+
+</div><!-- /main -->
+
+<button id="scroll-top" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+const history = [];
+let isRunning = false;
+
+// ─── Action metadata ─────────────────────────────────────────────────────────
+const ACTION_META = {
+  read_file: {
+    desc: "Read file content. Optionally specify start_line / end_line for a line range.",
+    show: ["arg-path","arg-lines"],
+  },
+  read_file_chunked: {
+    desc: "Paginated read for very large files. Specify chunk_size (lines per chunk) and offset_line (1-based starting line, e.g. 1, 201, 401).",
+    show: ["arg-path","arg-chunk"],
+  },
+  parse_ast: {
+    desc: "Extract classes, functions, imports and call graph via Python AST analysis.",
+    show: ["arg-path"],
+  },
+  list_dir: {
+    desc: "List directory contents. Use path='.' for the project root. Enable 'recursive' to see all subdirectories.",
+    show: ["arg-path","arg-recursive"],
+  },
+  search_files: {
+    desc: "Find files by name or glob pattern (e.g. *.py, *auth*, config.*). path is the directory to search from.",
+    show: ["arg-path","arg-query"],
+  },
+  search_in_file: {
+    desc: "Search for a literal string or regex pattern within a single file. Returns matching lines and offsets.",
+    show: ["arg-path","arg-pattern"],
+  },
+  search_symbols: {
+    desc: "Find classes, functions, and method symbols across all Python files in the project. path='.' to search everywhere.",
+    show: ["arg-path","arg-query"],
+  },
+  read_structured: {
+    desc: "Parse JSON, YAML, or Markdown into structured data. Path must point to a .json, .yaml/.yml, or .md file.",
+    show: ["arg-path"],
+  },
+};
+
+const ALL_ARG_IDS = ["arg-path","arg-query","arg-pattern","arg-lines","arg-recursive","arg-chunk"];
+
+function onActionChange() {
+  const action = document.getElementById("action-select").value;
+  const meta = ACTION_META[action] || { desc:"", show:[] };
+  document.getElementById("action-desc").textContent = meta.desc;
+  ALL_ARG_IDS.forEach(id => {
+    document.getElementById(id).classList.toggle("hidden", !meta.show.includes(id));
+  });
+  // Update query placeholder for context
+  const qInput = document.getElementById("arg-query-val");
+  if (action === "search_files") qInput.placeholder = "*.py  or  *auth*  or  config.*";
+  else if (action === "search_symbols") qInput.placeholder = "Calculator  or  login  or  UserAuth";
+}
+
+// ─── Connection test ──────────────────────────────────────────────────────────
+async function testConnection() {
+  const url = document.getElementById("backend-url").value.trim();
+  const statusEl = document.getElementById("conn-status");
+  const detailEl = document.getElementById("conn-detail");
+
+  if (!url) {
+    statusEl.innerHTML = '<span class="chip chip-yellow">⚠ Enter a URL first</span>';
+    detailEl.textContent = "";
+    return;
+  }
+  const btn = document.getElementById("btn-test-conn");
+  btn.disabled = true;
+  btn.textContent = "Testing…";
+  statusEl.innerHTML = '<span class="chip chip-gray"><span class="dot-pulse dot-yellow"></span>Connecting…</span>';
+  detailEl.textContent = "";
+
+  try {
+    const res = await fetch("/api/health", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({url}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.innerHTML = `<span class="chip chip-green"><span class="dot-pulse dot-green"></span>Connected / Healthy</span>`;
+      detailEl.textContent = `HTTP ${data.status_code} — ${data.latency_ms} ms — ${data.message || ""}`;
+    } else {
+      statusEl.innerHTML = `<span class="chip chip-red"><span class="dot-pulse dot-red"></span>Connection failed</span>`;
+      detailEl.textContent = data.message || "Unknown error";
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span class="chip chip-red">⚠ Request error</span>`;
+    detailEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Test Connection";
+  }
+}
+
+// ─── Workspace validation ─────────────────────────────────────────────────────
+function clearWsStatus() {
+  document.getElementById("ws-status").innerHTML = "";
+  document.getElementById("ws-detail").textContent = "";
+}
+
+async function validateWorkspace() {
+  const root = document.getElementById("project-root").value.trim();
+  const statusEl = document.getElementById("ws-status");
+  const detailEl = document.getElementById("ws-detail");
+  if (!root) {
+    statusEl.innerHTML = '<span class="chip chip-yellow">⚠ Enter a path first</span>';
+    return;
+  }
+  const btn = document.getElementById("btn-validate-ws");
+  btn.disabled = true; btn.textContent = "Checking…";
+  statusEl.innerHTML = '<span class="chip chip-gray"><span class="dot-pulse dot-yellow"></span>Validating…</span>';
+
+  try {
+    const enc = encodeURIComponent(root);
+    const res = await fetch(`/api/validate?workspace_root=${enc}`);
+    const data = await res.json();
+    if (data.ok) {
+      const entries = data.data?.data?.entries || [];
+      const count = entries.length;
+      statusEl.innerHTML = `<span class="chip chip-green">✓ Readable — ${count} top-level entries</span>`;
+      detailEl.textContent = "Resolved: " + (data.resolved_root || root);
+    } else {
+      statusEl.innerHTML = `<span class="chip chip-red">✗ ${data.error || "Unreadable"}</span>`;
+      detailEl.textContent = data.data?.error_message || "";
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span class="chip chip-red">⚠ Error</span>`;
+    detailEl.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = "Validate";
+  }
+}
+
+// ─── Run Reader ───────────────────────────────────────────────────────────────
+async function runReader() {
+  if (isRunning) return;
+
+  const root   = document.getElementById("project-root").value.trim();
+  const action = document.getElementById("action-select").value;
+  const path   = document.getElementById("arg-path-val").value.trim();
+
+  if (!root) {
+    setRunStatus("⚠ Set project root first.", "yellow");
+    return;
+  }
+  if (!action) {
+    setRunStatus("⚠ Select an action.", "yellow");
+    return;
+  }
+
+  const body = { workspace_root: root, action };
+
+  // Collect kwargs — only from VISIBLE arg fields.
+  // Switching actions hides fields but does not clear their values, so we must
+  // guard against stale values from a previously selected action leaking into
+  // the request body and causing InvalidArgument errors in NodeInsight.
+  function argVisible(divId) {
+    return !document.getElementById(divId).classList.contains("hidden");
+  }
+  if (path) body.path = path;
+  if (argVisible("arg-query")) {
+    const q = document.getElementById("arg-query-val").value.trim();
+    if (q) body.query = q;
+  }
+  if (argVisible("arg-pattern")) {
+    const p = document.getElementById("arg-pattern-val").value.trim();
+    if (p) body.pattern = p;
+  }
+  if (argVisible("arg-lines")) {
+    const sl = document.getElementById("arg-start-line").value;
+    if (sl) body.start_line = parseInt(sl);
+    const el = document.getElementById("arg-end-line").value;
+    if (el) body.end_line = parseInt(el);
+  }
+  if (argVisible("arg-recursive")) {
+    const rec = document.getElementById("arg-recursive-val").checked;
+    if (rec) body.recursive = true;
+  }
+  if (argVisible("arg-chunk")) {
+    const cs = document.getElementById("arg-chunk-size").value;
+    if (cs) body.chunk_size = parseInt(cs);
+    const ci = document.getElementById("arg-chunk-index").value;
+    if (ci) body.offset_line = parseInt(ci);  // NodeInsight: offset_line is the 1-based start line
+  }
+
+  setLoading(true);
+  setRunStatus("Running…", "muted");
+
+  const t0 = performance.now();
+  let data;
+  try {
+    const res = await fetch("/api/reader", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body),
+    });
+    data = await res.json();
+  } catch(e) {
+    data = { ok: false, error: "Fetch error: " + e.message, latency_ms: 0 };
+  } finally {
+    setLoading(false);
+  }
+
+  const elapsed = (performance.now() - t0).toFixed(0);
+  const statusLabel = data.ok ? "OK" : "ERROR";
+  setRunStatus(`${statusLabel} — ${data.latency_ms ?? elapsed} ms`, data.ok ? "green" : "red");
+
+  renderOutput(body, data);
+  addHistory(action, path || "—", data.ok, data.latency_ms ?? elapsed);
+}
+
+// ─── Output rendering ─────────────────────────────────────────────────────────
+function renderOutput(request, data) {
+  document.getElementById("output-panel").style.display = "block";
+
+  // Timing bar
+  document.getElementById("t-action").textContent  = request.action;
+  document.getElementById("t-path").textContent    = request.path || "—";
+  document.getElementById("t-latency").textContent = (data.latency_ms ?? "?") + " ms";
+  const chip = data.ok
+    ? '<span class="chip chip-green">✓ Success</span>'
+    : '<span class="chip chip-red">✗ Error</span>';
+  document.getElementById("t-status-chip").innerHTML = chip;
+
+  const title = document.getElementById("output-title");
+  const dot   = document.getElementById("output-dot");
+  if (data.ok) {
+    title.textContent = "Reader Output";
+    dot.style.background = "var(--green)";
+  } else {
+    title.textContent = "Reader Output — Error";
+    dot.style.background = "var(--red)";
+  }
+
+  // Body
+  const bodyEl = document.getElementById("output-body");
+  bodyEl.innerHTML = "";
+
+  if (!data.ok) {
+    bodyEl.innerHTML = `
+      <div class="error-label">Error</div>
+      <div class="error-box">${escHtml(data.error || "Unknown error")}</div>`;
+  } else {
+    const inner = data.data; // ToolResponse
+    if (inner && inner.data) {
+      bodyEl.innerHTML = renderToolResponse(request.action, inner.data);
+    } else {
+      bodyEl.innerHTML = `<div class="structured-output"><pre>${escHtml(JSON.stringify(inner, null, 2))}</pre></div>`;
+    }
+  }
+
+  // Raw JSON
+  document.getElementById("raw-json-content").innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+  document.getElementById("raw-details").open = false;
+
+  // Scroll to output
+  document.getElementById("output-panel").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function renderToolResponse(action, payload) {
+  if (action === "read_file" || action === "read_file_chunked") {
+    return renderFileContent(payload);
+  }
+  if (action === "list_dir") {
+    return renderDirListing(payload);
+  }
+  if (action === "parse_ast") {
+    return renderAstResult(payload);
+  }
+  if (action === "search_files") {
+    return renderSearchFiles(payload);
+  }
+  if (action === "search_symbols") {
+    return renderSearchSymbols(payload);
+  }
+  if (action === "search_in_file") {
+    return renderSearchInFile(payload);
+  }
+  if (action === "read_structured") {
+    return renderStructured(payload);
+  }
+  // Fallback
+  return `<div class="structured-output"><pre>${escHtml(JSON.stringify(payload, null, 2))}</pre></div>`;
+}
+
+function renderFileContent(payload) {
+  const filePath = payload.path || "—";
+  const content  = payload.content || "";
+  const total    = payload.total_lines || "?";
+  const sl       = payload.start_line;
+  const el       = payload.end_line;
+  const lineInfo = (sl && el) ? `LINES ${sl}–${el}` : `FULL FILE (${total} lines)`;
+
+  return `
+  <div class="file-block">
+    <div class="file-header">
+      <span class="file-icon">📄</span>
+      <span class="file-path">FILE: ${escHtml(filePath)}</span>
+      <span class="file-lines">${escHtml(lineInfo)}</span>
+    </div>
+    <div class="file-content">
+      <pre class="code-block">${escHtml(content)}</pre>
+    </div>
+  </div>`;
+}
+
+function renderDirListing(payload) {
+  const entries = payload.entries || [];
+  if (entries.length === 0) return `<div style="color:var(--muted);font-size:13px">Empty directory.</div>`;
+
+  const rows = entries.map(e => {
+    const icon = e.is_dir ? "📁" : "📄";
+    const size = e.size_bytes != null ? `<span style="color:var(--muted);font-family:var(--font-mono);font-size:11px">${formatBytes(e.size_bytes)}</span>` : "";
+    return `<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #1c2128;font-size:12px;align-items:center">
+      <span>${icon}</span>
+      <span style="font-family:var(--font-mono);flex:1">${escHtml(e.name)}</span>
+      ${e.is_dir ? '<span style="color:var(--muted);font-size:11px">dir</span>' : size}
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="output-meta">
+    <span class="meta-tag">📁 <strong>${escHtml(payload.path || ".")}</strong></span>
+    <span class="meta-tag">${entries.length} entries</span>
+  </div>
+  <div class="structured-output" style="max-height:320px">${rows}</div>`;
+}
+
+function renderAstResult(payload) {
+  const classes = payload.classes || [];
+  const fns     = payload.functions || [];
+  const imports = payload.import_graph || [];
+  let html = `<div class="output-meta">
+    <span class="meta-tag">📄 <strong>${escHtml(payload.path||"")}</strong></span>
+    <span class="meta-tag">${classes.length} classes</span>
+    <span class="meta-tag">${fns.length} top-level functions</span>
+    <span class="meta-tag">${imports.length} imports</span>
+  </div>`;
+
+  if (classes.length) {
+    html += `<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Classes</div>`;
+    classes.forEach(c => {
+      const methods = (c.methods||[]).map(m=>m.name).join(", ");
+      html += `<div style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:12px">
+        <span style="color:var(--purple);font-family:var(--font-mono);font-weight:700">class ${escHtml(c.name)}</span>
+        <span style="color:var(--muted)"> line ${c.line||"?"}</span>
+        ${methods ? `<div style="color:var(--muted);margin-top:3px;font-family:var(--font-mono);font-size:11px">methods: ${escHtml(methods)}</div>` : ""}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  if (fns.length) {
+    html += `<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Functions</div>`;
+    fns.forEach(f => {
+      html += `<div style="padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;margin-bottom:5px;font-size:12px">
+        <span style="color:var(--accent);font-family:var(--font-mono);font-weight:600">${escHtml(f.signature || ("def " + f.name + "(…)"))}</span>
+        <span style="color:var(--muted)"> line ${f.line||"?"}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  if (imports.length) {
+    html += `<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Imports</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px">
+        ${imports.map(i=>`<span style="background:#21262d;padding:2px 8px;border-radius:4px;border:1px solid var(--border)">${escHtml(i)}</span>`).join("")}
+      </div></div>`;
+  }
+  return html;
+}
+
+function renderSearchFiles(payload) {
+  const matches = payload.matches || [];
+  if (!matches.length) return `<div style="color:var(--muted);font-size:13px">No files found.</div>`;
+  return `<div class="output-meta">
+    <span class="meta-tag">${matches.length} file(s) found</span>
+  </div>
+  <div class="structured-output" style="max-height:320px">
+    ${matches.map(m=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #1c2128;font-size:12px;align-items:center">
+      <span>📄</span>
+      <span style="font-family:var(--font-mono);flex:1">${escHtml(m.path||m.name||JSON.stringify(m))}</span>
+      <span style="color:var(--muted);font-size:11px">${m.size_bytes!=null?formatBytes(m.size_bytes):""}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderSearchSymbols(payload) {
+  const symbols = payload.symbols || payload.matches || [];
+  if (!symbols.length) return `<div style="color:var(--muted);font-size:13px">No symbols found.</div>`;
+  return `<div class="output-meta"><span class="meta-tag">${symbols.length} symbol(s)</span></div>
+  <div class="structured-output" style="max-height:360px">
+    ${symbols.map(s=>`<div style="padding:6px 0;border-bottom:1px solid #1c2128;font-size:12px;display:flex;gap:10px;align-items:center">
+      <span style="color:var(--purple);font-family:var(--font-mono);font-weight:600">${escHtml(s.kind||s.type||"sym")}</span>
+      <span style="font-family:var(--font-mono)">${escHtml(s.name||"")}</span>
+      <span style="color:var(--muted);font-size:11px;flex:1">${escHtml(s.file||s.path||"")} ${s.line?"line "+s.line:""}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderSearchInFile(payload) {
+  const matches = payload.matches || [];
+  const total   = payload.total_matches || matches.length;
+  if (!matches.length) return `<div style="color:var(--muted);font-size:13px">No matches found.</div>`;
+  return `<div class="output-meta">
+    <span class="meta-tag">📄 <strong>${escHtml(payload.path||"")}</strong></span>
+    <span class="meta-tag">${total} match(es)</span>
+  </div>
+  <div class="structured-output" style="max-height:360px">
+    ${matches.map(m=>`<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #1c2128;font-size:12px;align-items:baseline">
+      <span style="color:var(--muted);font-family:var(--font-mono);width:50px;text-align:right;flex-shrink:0">L${m.line_number||"?"}</span>
+      <span style="font-family:var(--font-mono);white-space:pre">${escHtml(m.line||m.content||"")}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderStructured(payload) {
+  const data = payload.data;
+  const format = payload.format || "";
+  return `<div class="output-meta">
+    <span class="meta-tag">📄 <strong>${escHtml(payload.path||"")}</strong></span>
+    ${format ? `<span class="meta-tag">${escHtml(format)}</span>` : ""}
+  </div>
+  <div class="structured-output"><pre>${escHtml(JSON.stringify(data, null, 2))}</pre></div>`;
+}
+
+// ─── History ──────────────────────────────────────────────────────────────────
+function addHistory(action, path, ok, latency) {
+  const now = new Date().toLocaleTimeString();
+  history.unshift({action, path, ok, latency, time: now});
+  if (history.length > 20) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById("history-log");
+  if (!history.length) { el.innerHTML = '<div class="history-empty">No requests yet.</div>'; return; }
+  el.innerHTML = history.map((h, i) => `
+    <div class="history-entry" onclick="replayHistory(${i})" title="Click to re-load this request's path/action">
+      <span class="h-time">${h.time}</span>
+      <span class="h-status">${h.ok ? '<span class="chip chip-green" style="padding:1px 7px;font-size:10px">OK</span>' : '<span class="chip chip-red" style="padding:1px 7px;font-size:10px">ERR</span>'}</span>
+      <span class="h-action">${escHtml(h.action)}</span>
+      <span class="h-path">${escHtml(h.path)}</span>
+      <span style="margin-left:auto;color:var(--muted);font-size:10px;white-space:nowrap">${h.latency} ms</span>
+    </div>`).join("");
+}
+
+function replayHistory(i) {
+  const h = history[i];
+  document.getElementById("action-select").value = h.action;
+  document.getElementById("arg-path-val").value  = h.path === "—" ? "" : h.path;
+  onActionChange();
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function setLoading(on) {
+  isRunning = on;
+  document.getElementById("btn-run").disabled = on;
+  document.getElementById("spinner").style.display = on ? "block" : "none";
+}
+
+function setRunStatus(msg, color) {
+  const el = document.getElementById("run-status");
+  const colors = {green:"var(--green)", red:"var(--red)", yellow:"var(--yellow)", muted:"var(--muted)"};
+  el.style.color = colors[color] || "var(--muted)";
+  el.textContent = msg;
+}
+
+function clearOutput() {
+  document.getElementById("output-panel").style.display = "none";
+  document.getElementById("output-body").innerHTML = "";
+  document.getElementById("raw-json-content").innerHTML = "";
+  document.getElementById("run-status").textContent = "";
+}
+
+function escHtml(s) {
+  if (s == null) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function formatBytes(b) {
+  if (b == null) return "";
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b/1024).toFixed(1) + " KB";
+  return (b/1048576).toFixed(2) + " MB";
+}
+
+function syntaxHighlight(json) {
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+    if (/^"/.test(match)) {
+      if (/:$/.test(match)) return `<span class="j-key">${escHtml(match)}</span>`;
+      return `<span class="j-str">${escHtml(match)}</span>`;
+    }
+    if (/true|false/.test(match)) return `<span class="j-bool">${match}</span>`;
+    if (/null/.test(match)) return `<span class="j-null">${match}</span>`;
+    return `<span class="j-num">${match}</span>`;
+  });
+}
+
+// ─── Keyboard shortcut: Ctrl+Enter → Run ─────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runReader(); }
+});
+
+// ─── Scroll-to-top button ────────────────────────────────────────────────────
+window.addEventListener("scroll", () => {
+  document.getElementById("scroll-top").classList.toggle("visible", window.scrollY > 300);
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+onActionChange();
+</script>
+</body>
+</html>

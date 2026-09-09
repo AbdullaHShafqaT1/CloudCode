@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and runtime logs
+.cache/
+.pytest_cache/
+nodelog_data/
+*.log
+
+# Temporary test captures
+scratch/*.png
+scratch/__pycache__/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+{
+  "tunnel_url": "https://jane-placement-flooring-undefined.trycloudflare.com",
+  "workspace_root": "C:\\Users\\Acer\\Desktop\\projects\\tests\\TESTING-0.1",
+  "model": "gemma4:e4b",
+  "max_rounds": 50,
+  "task_prompt": "Create a complete, polished, standalone GUI-based Sudoku game in Python using CustomTkinter inside the workspace. The application must feature:\n1. Three selectable difficulty levels (Easy, Medium, Hard) with procedurally generated or algorithmically sliced valid boards.\n2. An interactive 9x9 grid with input handling, cell highlighting, and real-time validation for invalid duplicate entries.\n3. Clean architecture split into logic (sudoku_logic.py), GUI presentation (sudoku_app.py), automated test suite (test_sudoku.py), and entrypoint (main.py).\n4. Full autonomous delivery: Write all files completely with zero placeholder stubs (# TODO), execute local tests to verify board generation/solvability, and issue TERMINATE once fully operational."
+}
