@@ -1,0 +1,15 @@
+
+import sys
+from chess_gui import create_server
+
+if __name__ == '__main__':
+    host = '127.0.0.1'
+    port = 8765
+    for i, arg in enumerate(sys.argv):
+        if arg == '--host':
+            host = sys.argv[i + 1]
+        elif arg == '--port':
+            port = int(sys.argv[i + 1])
+    server = create_server(host, port)
+    print(f"Starting server on http://{host}:{port}")
+    server.serve_forever()

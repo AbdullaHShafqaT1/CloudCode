@@ -1,0 +1,22 @@
+
+def summarize(values):
+    if not isinstance(values, (list, tuple)):
+        raise TypeError("Input must be a list or tuple.")
+    
+    if not values:
+        raise ValueError("Input list or tuple cannot be empty.")
+    
+    count = len(values)
+    total = sum(values)
+    mean = total / count
+    
+    min_value = min(values)
+    max_value = max(values)
+    
+    return {
+        "count": count,
+        "total": total,
+        "mean": mean,
+        "minimum": min_value,
+        "maximum": max_value
+    }

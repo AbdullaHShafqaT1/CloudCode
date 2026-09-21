@@ -1,0 +1,10 @@
+{
+  "url": "https://association-safely-tucson-explicitly.trycloudflare.com/v1/models",
+  "method": "GET",
+  "started_at": "2026-09-21T11:51:11.092006+00:00",
+  "http_status": 200,
+  "model_ids": [
+    "qwen2.5-coder:32b"
+  ],
+  "elapsed_seconds": 0.719
+}

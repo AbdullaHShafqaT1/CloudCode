@@ -12,12 +12,16 @@ class PhaseStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 class SessionStatus(str, Enum):
     INITIALIZED = "INITIALIZED"
     RUNNING = "RUNNING"
     TERMINATED = "TERMINATED"
     ERROR = "ERROR"
+    COMPLETED = "COMPLETED"
+    INCOMPLETE = "INCOMPLETE"
+    CANCELLED = "CANCELLED"
 
 class Step(BaseModel):
     step: int
@@ -149,4 +153,3 @@ class RemediationFailedException(Exception):
     def __init__(self, message: str = "Remediation failed after reaching retry limit", details: Optional[Dict[str, Any]] = None):
         super().__init__(message)
         self.details = details or {}
-

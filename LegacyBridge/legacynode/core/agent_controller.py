@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 import json
 import re
+from pathlib import Path
+from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -102,6 +104,7 @@ class AgentController:
         )
 
         self._stop_event = asyncio.Event()
+        self._terminal.should_stop = self._stop_event.is_set
         self._current_team: Optional[RoundRobinGroupChat] = None
 
     # ─── Control ─────────────────────────────────────────────────────────────
@@ -133,8 +136,49 @@ class AgentController:
             task_id=task.id,
         )
 
+        workflow = None
         try:
-            summary = await self._execute_with_autogen(task_description, task.id)
+            # Snapshot caller criteria before the native tool-using team runs.
+            from node_core.agents import detect_project_profile
+            from node_core.workflow import TaskWorkflow
+            workflow = TaskWorkflow(self._workspace_root, task_description,
+                                    detect_project_profile(task_description), self._max_iterations,
+                                    should_stop=self._stop_event.is_set)
+            self._messages_used = 0
+            prompt = task_description
+            while True:
+                previous_count = self._messages_used
+                summary = await self._execute_with_autogen(prompt, task.id)
+                if self._stop_event.is_set():
+                    workflow.stop("CANCELLED", "User requested cancellation")
+                    break
+                workflow.rounds = self._messages_used
+                errors = await asyncio.to_thread(workflow.verify, True)
+                workflow.remaining = errors
+                if self._stop_event.is_set():
+                    workflow.stop("CANCELLED", "User requested cancellation")
+                    break
+                if not errors:
+                    workflow.stop("COMPLETED", "Caller acceptance and executable verification passed")
+                    break
+                if self._messages_used >= self._max_iterations:
+                    workflow.stop("MAX_ROUNDS_REACHED", "Native team message budget exhausted")
+                    break
+                if self._messages_used == previous_count or not workflow.checks:
+                    workflow.stop("VERIFICATION_FAILED", "Conversation ended without passing verification")
+                    break
+                prompt = task_description + "\nRepair these verified failures:\n" + "\n".join(errors)
+            report = workflow.report()
+            report["native_summary"] = summary
+            report["execution_steps"] = [asdict(step) for step in self._state.get_execution_steps()]
+            report_path = Path(self._workspace_root) / ".cloudcode" / "runs" / f"{task.id}.json"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            if workflow.status != "COMPLETED":
+                await self._state.fail_task(task, workflow.reason, status=workflow.status)
+                await self._state.set_status(AgentStatus.IDLE)
+                await self._hub.push(NotificationLevel.WARNING, workflow.status, workflow.reason, task_id=task.id)
+                return workflow.status + ": " + workflow.reason
             await self._state.complete_task(task, summary)
             await self._state.set_status(AgentStatus.IDLE)
             await self._hub.push(
@@ -147,12 +191,18 @@ class AgentController:
 
         except asyncio.CancelledError:
             log.info("Task cancelled via CancelledError")
-            await self._state.fail_task(task, "Cancelled by user")
+            if workflow:
+                workflow.stop("CANCELLED", "Cancelled by user")
+                self._persist_failure(workflow, task.id)
+            await self._state.fail_task(task, "Cancelled by user", status="CANCELLED")
             await self._state.set_status(AgentStatus.IDLE)
             raise
 
         except Exception as exc:
             err_msg = str(exc)
+            if workflow:
+                workflow.stop("FAILED", err_msg)
+                self._persist_failure(workflow, task.id)
             log.error("Task failed with exception", exc_info=True)
             await self._state.fail_task(task, err_msg)
             await self._state.set_status(AgentStatus.ERROR)
@@ -163,6 +213,16 @@ class AgentController:
                 task_id=task.id,
             )
             raise
+
+    def _persist_failure(self, workflow, task_id):
+        report = workflow.report()
+        report["execution_steps"] = [asdict(step) for step in self._state.get_execution_steps()]
+        path = Path(self._workspace_root) / ".cloudcode" / "runs" / f"{task_id}.json"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError as exc:
+            self._state.add_live_output(f"Could not persist run evidence: {exc}")
 
     # ─── AutoGen Team Construction ────────────────────────────────────────────
 
@@ -250,7 +310,7 @@ class AgentController:
         termination = (
             TextMentionTermination("TASK_COMPLETE")
             | TextMentionTermination("APPROVED")
-            | MaxMessageTermination(self._max_iterations)
+            | MaxMessageTermination(max(1, self._max_iterations - self._messages_used))
         )
 
         team = RoundRobinGroupChat(
@@ -265,57 +325,71 @@ class AgentController:
 
         log.info("AutoGen team started", task_id=task_id)
 
-        async for message in team.run_stream(
-            task=TextMessage(content=task_description, source="user")
-        ):
-            if self._stop_event.is_set():
-                log.info("Stop event detected — breaking agent loop")
-                break
+        try:
+            async for message in team.run_stream(
+                task=TextMessage(content=task_description, source="user")
+            ):
+                if self._stop_event.is_set():
+                    log.info("Stop event detected — breaking agent loop")
+                    break
 
-            if isinstance(message, TextMessage):
-                content = message.content
-                self._state.add_live_output(f"[{message.source}] {content[:300]}")
-                summary_lines.append(f"{message.source}: {content[:200]}")
+                if isinstance(message, (TextMessage, ToolCallSummaryMessage)):
+                    if message.source != "user":
+                        self._messages_used += 1
+                    content = message.content
+                    self._state.add_live_output(f"[{message.source}] {content[:300]}")
+                    summary_lines.append(f"{message.source}: {content[:200]}")
 
-                step = ExecutionStep(
-                    index=step_idx,
-                    thought=content,
-                    action=None,
-                )
-                self._state.add_execution_step(step)
-                step_idx += 1
+                    step = ExecutionStep(
+                        index=step_idx,
+                        thought=content,
+                        action=None,
+                    )
+                    self._state.add_execution_step(step)
+                    step_idx += 1
 
-            elif isinstance(message, ToolCallRequestEvent):
-                calls_str = ", ".join(c.name for c in message.content)
-                self._state.add_live_output(f"[tools] Calling: {calls_str}")
-                log.debug("Tool calls dispatched", tools=calls_str, task_id=task_id)
+                elif isinstance(message, ToolCallRequestEvent):
+                    for call in message.content:
+                        self._state.add_execution_step(ExecutionStep(
+                            index=step_idx, thought="Tool requested", action=call.name,
+                            action_input={"arguments": call.arguments, "call_id": call.id}))
+                        step_idx += 1
+                    calls_str = ", ".join(c.name for c in message.content)
+                    self._state.add_live_output(f"[tools] Calling: {calls_str}")
+                    log.debug("Tool calls dispatched", tools=calls_str, task_id=task_id)
 
-            elif isinstance(message, ToolCallExecutionEvent):
-                for result in message.content:
-                    # In autogen 0.7.x is_error was removed; check for error prefix
-                    result_str = str(result.content) if hasattr(result, "content") else str(result)
-                    is_error = result_str.lower().startswith("error") or "traceback" in result_str.lower()
-                    if is_error:
-                        error_count += 1
-                        err_text = result_str[:200]
-                        self._state.add_live_output(f"[tool-error] {err_text}")
-                        await self._hub.push(
-                            NotificationLevel.WARNING,
-                            f"Tool Error (#{error_count})",
-                            err_text,
-                            task_id=task_id,
-                        )
-                        log.warning(
-                            "Tool returned error",
-                            error=err_text,
-                        )
-                        if error_count >= self._correction_retries:
+                elif isinstance(message, ToolCallExecutionEvent):
+                    for result in message.content:
+                        # Preserve both structured tool errors and textual failures.
+                        result_str = str(result.content) if hasattr(result, "content") else str(result)
+                        self._state.add_execution_step(ExecutionStep(
+                            index=step_idx, thought="Tool result", observation=result_str))
+                        step_idx += 1
+                        is_error = bool(getattr(result, "is_error", False)) or result_str.lower().startswith("error") or "traceback" in result_str.lower()
+                        if is_error:
+                            error_count += 1
+                            err_text = result_str[:200]
+                            self._state.add_live_output(f"[tool-error] {err_text}")
                             await self._hub.push(
-                                NotificationLevel.ERROR,
-                                "Max tool errors reached",
-                                f"Stopping after {error_count} tool failures.",
+                                NotificationLevel.WARNING,
+                                f"Tool Error (#{error_count})",
+                                err_text,
                                 task_id=task_id,
                             )
+                            log.warning(
+                                "Tool returned error",
+                                error=err_text,
+                            )
+                            if error_count >= self._correction_retries:
+                                await self._hub.push(
+                                    NotificationLevel.ERROR,
+                                    "Repeated tool errors",
+                                    f"{error_count} tool failures; repairs remain within the message budget.",
+                                    task_id=task_id,
+                                )
+
+        finally:
+            await model_client.close()
 
         # Extract completion summary
         final_summary = self._extract_summary(summary_lines)

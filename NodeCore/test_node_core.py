@@ -770,9 +770,10 @@ Requirements:
     assert "DO NOT generate GUI, main entry point, test suite, or documentation in this turn" in scoped
     assert "ZERO CONVERSATIONAL ADVICE" in scoped
 
-    # Sanity check prompts should be preserved
+    # A filename or the phrase sanity check must not bypass verification.
     sanity_prompt = "Create hello.py sanity check file"
-    assert prepare_phased_task_prompt(sanity_prompt) == sanity_prompt
+    assert sanity_prompt in prepare_phased_task_prompt(sanity_prompt)
+    assert "Only the orchestrator can declare completion" in prepare_phased_task_prompt(sanity_prompt)
 
 
 def test_project_profile_detection():

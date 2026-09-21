@@ -1,0 +1,6 @@
+
+import json
+
+def format_summary(result):
+    # Convert the result dictionary to a JSON formatted string
+    return json.dumps(result, indent=4)

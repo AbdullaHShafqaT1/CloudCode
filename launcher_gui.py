@@ -284,7 +284,7 @@ def probe_endpoint_health(
     base_url: str,
     model: str = "qwen2.5-coder:32b",
     timeout: int = 15,
-    logger: Callable[[str], None] = print
+    logger: Callable[[str], None] = print,
 ) -> Tuple[bool, str]:
     """
     Probes remote Cloudflare endpoint for health (/v1/models and /v1/chat/completions).
@@ -296,8 +296,9 @@ def probe_endpoint_health(
         logger(f"[!] {msg}")
         return False, msg
 
-    models_url = f"{cleaned_url}/v1/models"
-    chat_url = f"{cleaned_url}/v1/chat/completions"
+    api_base = cleaned_url if cleaned_url.endswith("/v1") else f"{cleaned_url}/v1"
+    models_url = f"{api_base}/models"
+    chat_url = f"{api_base}/chat/completions"
 
     logger(f"[*] Probing LLM endpoint: {cleaned_url} ...")
     models_ok = False
@@ -357,7 +358,9 @@ def run_autonomous_orchestrator(
     task_prompt: str,
     model: str = "qwen2.5-coder:32b",
     max_rounds: int = 50,
-    logger: Callable[[str], None] = print
+    logger: Callable[[str], None] = print,
+    should_stop: Optional[Callable[[], bool]] = None,
+    acceptance: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Executes the autonomous 2-agent AutoGen execution loop (CoderAgent <-> UserProxyRunner)
@@ -396,7 +399,18 @@ def run_autonomous_orchestrator(
 
     # 4. Start the autonomous AutoGen task
     logger("\n[*] Starting NodeCore autonomous loop...")
-    result = orchestrator.start_task(task_prompt, max_rounds=max_rounds)
+    # This built-in preset has an exact, independently checkable output contract.
+    if acceptance is None and task_prompt.strip() == DEFAULT_TASK_PROMPT.strip():
+        from node_core.workflow import python_command
+        acceptance = {"required_files": ["hello.py"], "checks": [{
+            "requirement": "hello.py prints the requested greeting and exits successfully",
+            "command": python_command("-c", "import contextlib,io,runpy; "
+                                       "out=io.StringIO(); "
+                                       "exec('with contextlib.redirect_stdout(out):\\n runpy.run_path(\"hello.py\", run_name=\"__main__\")'); "
+                                       "assert out.getvalue().strip() == 'Hello from NodeCore autonomous runner!'"),
+        }]}
+    result = orchestrator.start_task(task_prompt, max_rounds=max_rounds,
+                                     should_stop=should_stop, acceptance=acceptance)
     logger(f"\n[*] Execution Finished. Result: {result.get('status')}")
     return result
 
@@ -1451,6 +1465,7 @@ class NodeCoreLauncherApp:
                     task_prompt=prompt,
                     model=model,
                     max_rounds=max_rounds,
+                    should_stop=lambda: self.stop_requested,
                     logger=print
                 )
                 self.log_queue.put(("task_finished", True, result))
@@ -1514,10 +1529,9 @@ class NodeCoreLauncherApp:
                         sender = data.get("source", "Agent")
                         recipient = data.get("recipient", "")
                         raw_msg = data.get("message", "")
-                        self.active_round += 1
-                        self.stat_round_lbl.configure(text=f"Round: {self.active_round}")
-
                         if sender == "CoderAgent":
+                            self.active_round += 1
+                            self.stat_round_lbl.configure(text=f"Round: {self.active_round}")
                             self._append_agent_stream(f"\n┌── [CoderAgent ➜ {recipient}] (Round {self.active_round})\n", "tag_agent_coder")
                             self._append_agent_stream(f"{raw_msg}\n", "tag_info")
                             self._append_agent_stream("└" + "─" * 50 + "\n", "tag_agent_coder")
@@ -1567,10 +1581,11 @@ class NodeCoreLauncherApp:
                     self._refresh_workspace_files()
 
                     if success:
-                        status_str = res.get("status", "COMPLETED") if isinstance(res, dict) else str(res)
-                        self.runtime_status_badge.configure(text="● COMPLETED", text_color="#7BC28C")
+                        status_str = res.get("status", "IN_PROGRESS") if isinstance(res, dict) else str(res)
+                        completed = status_str == "COMPLETED"
+                        self.runtime_status_badge.configure(text=f"● {status_str}", text_color="#7BC28C" if completed else "#E5B567")
                         self.status_bar.configure(text=f"Task Finished: {status_str}")
-                        self._append_agent_stream(f"\n[+] Autonomous Task Completed: {status_str}\n", "tag_success")
+                        self._append_agent_stream(f"\n[*] Autonomous Task Finished: {status_str}\n", "tag_success" if completed else "tag_warning")
                     else:
                         self.runtime_status_badge.configure(text="● ERROR", text_color="#E06C75")
                         self.status_bar.configure(text=f"Task Error: {res}")
@@ -1591,7 +1606,8 @@ def run_cli_fallback(
     workspace_root: Optional[str] = None,
     model: Optional[str] = None,
     task_prompt: Optional[str] = None,
-    non_interactive: bool = False
+    non_interactive: bool = False,
+    max_rounds: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Graceful fallback for headless/terminal environments prompting via standard CLI inputs.
@@ -1606,7 +1622,7 @@ def run_cli_fallback(
     selected_ws = workspace_root or cfg["workspace_root"]
     selected_model = model or cfg["model"]
     selected_prompt = task_prompt or cfg["task_prompt"]
-    selected_rounds = cfg.get("max_rounds", 50)
+    selected_rounds = max_rounds if max_rounds is not None else cfg.get("max_rounds", 50)
 
     if not non_interactive:
         print("\n[Configuration Settings]")
@@ -1637,7 +1653,7 @@ def run_cli_fallback(
             proceed = input("    Proceed with task anyway? [y/N]: ").strip().lower()
             if proceed not in ("y", "yes"):
                 print("[*] Aborted by user.")
-                return {"status": "ABORTED", "reason": "Endpoint unreachable"}
+                return {"status": "FAILED", "termination_reason": "Endpoint unreachable"}
 
     # Execute
     return run_autonomous_orchestrator(
@@ -1659,7 +1675,8 @@ def launch_orchestrator(
     tunnel_url: Optional[str] = None,
     workspace_root: Optional[str] = None,
     model: Optional[str] = None,
-    task_prompt: Optional[str] = None
+    task_prompt: Optional[str] = None,
+    max_rounds: Optional[int] = None,
 ):
     """
     Entrypoint that automatically launches the modern CustomTkinter GUI if possible,
@@ -1671,7 +1688,8 @@ def launch_orchestrator(
             workspace_root=workspace_root,
             model=model,
             task_prompt=task_prompt,
-            non_interactive=non_interactive
+            non_interactive=non_interactive,
+            max_rounds=max_rounds,
         )
 
     try:
@@ -1689,6 +1707,8 @@ def launch_orchestrator(
             cfg["model"] = model
         if task_prompt:
             cfg["task_prompt"] = task_prompt
+        if max_rounds is not None:
+            cfg["max_rounds"] = max_rounds
 
         app = NodeCoreLauncherApp(root, initial_config=cfg)
         root.mainloop()
@@ -1701,7 +1721,8 @@ def launch_orchestrator(
             workspace_root=workspace_root,
             model=model,
             task_prompt=task_prompt,
-            non_interactive=False
+            non_interactive=False,
+            max_rounds=max_rounds,
         )
 
 

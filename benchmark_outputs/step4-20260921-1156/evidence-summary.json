@@ -1,0 +1,769 @@
+{
+  "runs": {
+    "control": {
+      "workflow_status": "STALLED",
+      "reason": "Repeated iterations made no new file or phase progress",
+      "phase": 4,
+      "completed_phases": [
+        1,
+        2,
+        3
+      ],
+      "rounds": 10,
+      "response_count": 10,
+      "actual_http_requests": 10,
+      "actual_http_responses_with_choices": 10,
+      "http_codes": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "elapsed_seconds": 406.297,
+      "prompt_file": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-prompt.txt",
+      "files_read": [],
+      "files_created": [
+        "app_gui.py",
+        "app_logic.py",
+        "main.py",
+        "test_app.py"
+      ],
+      "files_modified": [
+        "app_gui.py",
+        "app_logic.py",
+        "main.py",
+        "test_app.py"
+      ],
+      "final_files": {
+        "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+        "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+        "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+        "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+      },
+      "commands": [
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 4,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python test_app.py",
+          "kind": "command",
+          "requirement": null,
+          "round": 4,
+          "exit_code": 1,
+          "status": "error",
+          "output": "F.........\r\n======================================================================\r\nFAIL: test_boolean (__main__.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control\\test_app.py\", line 26, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 5,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python test_app.py",
+          "kind": "command",
+          "requirement": null,
+          "round": 5,
+          "exit_code": 1,
+          "status": "error",
+          "output": "F...F.....\r\n======================================================================\r\nFAIL: test_boolean (__main__.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control\\test_app.py\", line 31, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n======================================================================\r\nFAIL: test_large_integer (__main__.TestSummarize.test_large_integer)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control\\test_app.py\", line 24, in test_large_integer\r\n    self.assertEqual(result, {\"count\": 2, \"total\": 1000000000010, \"mean\": 500000000005.0, \"minimum\": 1000000000000, \"maximum\": 1000000000010})\r\nAssertionError: {'cou[13 chars]l': 110000000000, 'mean': 55000000000.0, 'mini[38 chars]0000} != {'cou[13 chars]l': 1000000000010, 'mean': 500000000005.0, 'mi[43 chars]0010}\r\n  {'count': 2,\r\n-  'maximum': 100000000000,\r\n+  'maximum': 1000000000010,\r\n?                        +\r\n\r\n-  'mean': 55000000000.0,\r\n?          -\r\n\r\n+  'mean': 500000000005.0,\r\n?                    ++\r\n\r\n-  'minimum': 10000000000,\r\n+  'minimum': 1000000000000,\r\n?                        ++\r\n\r\n-  'total': 110000000000}\r\n?           -\r\n\r\n+  'total': 1000000000010}\r\n?                      ++\r\n\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=2)\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 6,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 7,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 8,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 9,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        },
+        {
+          "command": "python main.py <integer1> <integer2> ...",
+          "kind": "command",
+          "requirement": null,
+          "round": 10,
+          "exit_code": 1,
+          "status": "error",
+          "output": "< was unexpected at this time.\r\n"
+        }
+      ],
+      "verification": [],
+      "remaining_requirements": [
+        "Incomplete code fence for README.md; response may be truncated. Send this complete file alone with a closing fence.",
+        "Command failed; inspect its output and repair the cause.",
+        "Missing deliverable: RunningGUIDE.txt",
+        "Missing deliverable: README.md",
+        "Independent control behavior and documented launch acceptance"
+      ],
+      "phase_transitions": [
+        {
+          "time": "2026-09-21T07:00:58.378699+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 1,
+            "to_phase": 2
+          }
+        },
+        {
+          "time": "2026-09-21T07:00:58.380703+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 2,
+            "to_phase": 3
+          }
+        },
+        {
+          "time": "2026-09-21T07:01:13.951829+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 3,
+            "to_phase": 4
+          }
+        }
+      ],
+      "run_record": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control\\.cloudcode\\runs\\2e4e2abfa75e4f45ac01606f2013f594.json",
+      "checker_unchanged": true,
+      "independent": {
+        "checked_at": "2026-09-21T07:12:12.853746+00:00",
+        "command": [
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control_acceptance.py",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control"
+        ],
+        "exit_code": 1,
+        "elapsed_seconds": 0.25,
+        "files_before": {
+          "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+          "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+          "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+          "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+        },
+        "files_after": {
+          "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+          "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+          "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+          "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+        },
+        "files_unchanged": true,
+        "checker_sha256": "5791fbab3f5278a05c7cf3de8f1d1d2142ef71efe96d1f031690f4df7fffede2",
+        "output_log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-independent-final.log",
+        "passed": false
+      }
+    },
+    "control-retest": {
+      "workflow_status": "STALLED",
+      "reason": "Repeated iterations made no new file or phase progress",
+      "phase": 4,
+      "completed_phases": [
+        1,
+        2,
+        3
+      ],
+      "rounds": 9,
+      "response_count": 9,
+      "actual_http_requests": 9,
+      "actual_http_responses_with_choices": 9,
+      "http_codes": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "elapsed_seconds": 348.984,
+      "prompt_file": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-prompt.txt",
+      "files_read": [],
+      "files_created": [
+        "app_gui.py",
+        "app_logic.py",
+        "main.py",
+        "test_app.py"
+      ],
+      "files_modified": [
+        "app_gui.py",
+        "app_logic.py",
+        "test_app.py"
+      ],
+      "final_files": {
+        "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+        "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+        "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+        "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+      },
+      "commands": [
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-_pcu1_0a\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 4,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 26, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 4,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-i0ay7mgn\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 5,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 5,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-gsjt4fxz\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 6,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 6,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-cb3shwz8\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 7,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 7,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-dfwhsmtm\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 8,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 8,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -I \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py\" \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\" C:\\Users\\Acer\\AppData\\Local\\Temp\\cloudcode-check-jfit3z_h\\tests.json",
+          "kind": "tests",
+          "requirement": null,
+          "round": 9,
+          "exit_code": 1,
+          "status": "error",
+          "output": "test_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+          "test_result": {
+            "tests_run": 10,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "successful": false
+          }
+        },
+        {
+          "command": "\"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe\" -c \"import importlib; importlib.import_module('app_logic'); importlib.import_module('app_gui'); importlib.import_module('main')\"",
+          "kind": "imports",
+          "requirement": null,
+          "round": 9,
+          "exit_code": 0,
+          "status": "success",
+          "output": ""
+        }
+      ],
+      "verification": [
+        {
+          "round": 4,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 26, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+          }
+        },
+        {
+          "round": 5,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          }
+        },
+        {
+          "round": 6,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          }
+        },
+        {
+          "round": 7,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          }
+        },
+        {
+          "round": 8,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          }
+        },
+        {
+          "round": 9,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n"
+          ],
+          "files_before": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          },
+          "files": {
+            "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+            "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+            "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+            "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+          }
+        }
+      ],
+      "remaining_requirements": [
+        "Incomplete code fence for README.md; response may be truncated. Send this complete file alone with a closing fence.",
+        "Generated test suite must run at least one test, with no failures or skips:\ntest_boolean (test_app.TestSummarize.test_boolean) ... FAIL\r\ntest_empty (test_app.TestSummarize.test_empty) ... ok\r\ntest_float (test_app.TestSummarize.test_float) ... ok\r\ntest_invalid_container (test_app.TestSummarize.test_invalid_container) ... ok\r\ntest_large_integer (test_app.TestSummarize.test_large_integer) ... ok\r\ntest_negative (test_app.TestSummarize.test_negative) ... ok\r\ntest_normal (test_app.TestSummarize.test_normal) ... ok\r\ntest_singleton (test_app.TestSummarize.test_singleton) ... ok\r\ntest_string (test_app.TestSummarize.test_string) ... ok\r\ntest_tuple (test_app.TestSummarize.test_tuple) ... ok\r\n\r\n======================================================================\r\nFAIL: test_boolean (test_app.TestSummarize.test_boolean)\r\n----------------------------------------------------------------------\r\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\test_app.py\", line 7, in test_boolean\r\n    with self.assertRaises(TypeError):\r\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nAssertionError: TypeError not raised\r\n\r\n----------------------------------------------------------------------\r\nRan 10 tests in 0.001s\r\n\r\nFAILED (failures=1)\r\n",
+        "Missing deliverable: RunningGUIDE.txt",
+        "Missing deliverable: README.md",
+        "Independent control behavior and documented launch acceptance"
+      ],
+      "phase_transitions": [
+        {
+          "time": "2026-09-21T07:10:44.894585+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 1,
+            "to_phase": 2
+          }
+        },
+        {
+          "time": "2026-09-21T07:10:44.894585+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 2,
+            "to_phase": 3
+          }
+        },
+        {
+          "time": "2026-09-21T07:11:02.144110+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 3,
+            "to_phase": 4
+          }
+        }
+      ],
+      "run_record": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest\\.cloudcode\\runs\\04577e8a5aff422e9f9f6163d6dd0c7a.json",
+      "checker_unchanged": true,
+      "independent": {
+        "checked_at": "2026-09-21T07:17:04.807752+00:00",
+        "command": [
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control_acceptance.py",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest"
+        ],
+        "exit_code": 1,
+        "elapsed_seconds": 0.25,
+        "files_before": {
+          "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+          "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+          "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+          "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+        },
+        "files_after": {
+          "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+          "app_logic.py": "6bbb1a5bc835469a4699a526b270721236b130cd22d87f4fcee293b8f191ece1",
+          "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+          "test_app.py": "d8e7fba2400286332bef2c688238bbd8772ec64a01b2d6af9dbac4f12c4d3cd5"
+        },
+        "files_unchanged": true,
+        "checker_sha256": "5791fbab3f5278a05c7cf3de8f1d1d2142ef71efe96d1f031690f4df7fffede2",
+        "output_log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest-independent-final.log",
+        "passed": false
+      }
+    },
+    "chess": {
+      "workflow_status": "STALLED",
+      "reason": "Repeated iterations made no new file or phase progress",
+      "phase": 4,
+      "completed_phases": [
+        1,
+        2,
+        3
+      ],
+      "rounds": 9,
+      "response_count": 9,
+      "actual_http_requests": 9,
+      "actual_http_responses_with_choices": 9,
+      "http_codes": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "elapsed_seconds": 448.391,
+      "prompt_file": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess-prompt.txt",
+      "files_read": [],
+      "files_created": [
+        "RunningGUIDE.txt",
+        "chess_gui.py",
+        "chess_logic.py",
+        "main.py"
+      ],
+      "files_modified": [
+        "chess_gui.py",
+        "main.py"
+      ],
+      "final_files": {
+        "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+        "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+        "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+        "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+      },
+      "commands": [],
+      "verification": [
+        {
+          "round": 4,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "61371f5fc1a5c923f1d64c90aa9f0d538e5157fb5d257e9bcb15d7edc9441896",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        },
+        {
+          "round": 5,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        },
+        {
+          "round": 6,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        },
+        {
+          "round": 7,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        },
+        {
+          "round": 8,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        },
+        {
+          "round": 9,
+          "final": false,
+          "passed": false,
+          "errors": [
+            "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'"
+          ],
+          "files": {
+            "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+            "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+            "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+            "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+          }
+        }
+      ],
+      "remaining_requirements": [
+        "Incomplete code fence for test_chess.py; response may be truncated. Send this complete file alone with a closing fence.",
+        "test_chess.py: [Errno 2] No such file or directory: 'C:\\\\Users\\\\Acer\\\\Desktop\\\\projects\\\\LEGACYStudios\\\\cloud Bridge Projects\\\\CloudCode\\\\benchmark_outputs\\\\step4-20260921-1156\\\\chess\\\\test_chess.py'",
+        "Missing deliverable: test_chess.py",
+        "Missing deliverable: README.md",
+        "Independent chess behavior and documented launch acceptance"
+      ],
+      "phase_transitions": [
+        {
+          "time": "2026-09-21T07:17:21.845336+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 1,
+            "to_phase": 2
+          }
+        },
+        {
+          "time": "2026-09-21T07:17:21.846319+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 2,
+            "to_phase": 3
+          }
+        },
+        {
+          "time": "2026-09-21T07:18:49.582287+00:00",
+          "event": "PHASE_TRANSITION",
+          "data": {
+            "from_phase": 3,
+            "to_phase": 4
+          }
+        }
+      ],
+      "run_record": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess\\.cloudcode\\runs\\ee5cd40928be4337992e589534478e4b.json",
+      "checker_unchanged": true,
+      "independent": {
+        "checked_at": "2026-09-21T10:55:24.409379+00:00",
+        "command": [
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess_acceptance.py",
+          "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess"
+        ],
+        "exit_code": 1,
+        "elapsed_seconds": 9.656,
+        "files_before": {
+          "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+          "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+          "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+          "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+        },
+        "files_after": {
+          "chess_gui.py": "de6f56bbd1d20afae093a66dfd5b3d442ce900147570b4cc252c078af8721cec",
+          "chess_logic.py": "033f4af5317ad2d1033e8c29c92c8aabd50038a6b3662483bba0c0c2e25a42ab",
+          "main.py": "a3517518f5bcdd34d5893c45bbbb1afd6519802458a4b1d100748e53d276e909",
+          "RunningGUIDE.txt": "76e459528493a4abc235a24f0dd6d44131e9e8049f626810dac03e982e193809"
+        },
+        "files_unchanged": true,
+        "checker_sha256": "9f1e948334c5bee30f5bacf84cd128e0142eb37ac5c0d374ef30f0c516920bcf",
+        "output_log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess-independent-final.log",
+        "passed": false
+      }
+    }
+  },
+  "config_sha256": "fe68f9054e01c64c948c3a89233aba44913c145a991c5037b677b7dfe393bb88"
+}

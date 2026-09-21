@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import re
 from typing import Dict, Any, AsyncIterator, List, Optional, Union, Callable
 import uuid
+import json
+from pathlib import Path
 
 # Prevent UnicodeEncodeError on Windows cmd/powershell for characters like ♔ ♕
 if sys.platform == "win32":
@@ -47,21 +49,22 @@ def create_cloud_llm_config(
         "config_list": [
             {
                 "model": model,
-                "base_url": base_url.rstrip("/") + "/v1" if not base_url.endswith("/v1") else base_url,
+                "base_url": base_url.rstrip("/") if base_url.rstrip("/").endswith("/v1") else base_url.rstrip("/") + "/v1",
                 "api_key": api_key,
-                "max_tokens": 4096,
+                "max_tokens": 16384,
             }
         ],
         "temperature": 0.2,
         "timeout": 120,
-        "max_tokens": 4096,
+        "max_tokens": 16384,
     }
 
 def initialize_session(
     project_id: str, 
     workspace_path: str, 
     domain_type: str, 
-    env_config: dict
+    env_config: dict,
+    max_rounds: int = 50,
 ) -> SessionHandle:
     """
     Initialize a new NodeCore session, provisioning the required agents.
@@ -93,7 +96,7 @@ def initialize_session(
     # Register tool bindings for the agents
     # For now, we simulate this by just keeping track of the chat setup
     
-    groupchat = GroupChat(agents=agents, messages=[], max_round=50)
+    groupchat = GroupChat(agents=agents, messages=[], max_round=max_rounds)
     manager = GroupChatManager(groupchat=groupchat, llm_config=env_config)
     
     session_handle = SessionHandle(
@@ -108,7 +111,11 @@ def initialize_session(
         "agents": agents,
         "domain_type": domain_enum,
         "status": SessionStatus.INITIALIZED,
-        "steps_completed": 0
+        "steps_completed": 0,
+        "llm_config": env_config,
+        "max_rounds": max_rounds,
+        "started_at": datetime.now(timezone.utc),
+        "cancelled": False,
     }
     
     NodeLog.emit("SESSION_INITIALIZED", {"session_id": session_id, "domain": domain_type})
@@ -116,77 +123,33 @@ def initialize_session(
 
 
 async def execute_goal(session_handle: SessionHandle, prompt: str) -> AsyncIterator[PhaseUpdate]:
-    """
-    Execute a goal by running the agent group chat.
-    Yields phase updates asynchronously.
-    """
+    """Run the same verified workflow through the legacy asynchronous session API."""
     session_id = session_handle.session_id
     if session_id not in _ACTIVE_SESSIONS:
         raise ValueError(f"Invalid session ID: {session_id}")
-        
     session_data = _ACTIVE_SESSIONS[session_id]
     session_data["status"] = SessionStatus.RUNNING
-    
-    # Emit start event
-    NodeLog.emit("EXECUTION_STARTED", {"session_id": session_id, "prompt": prompt})
-    
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Planning",
-        status=PhaseStatus.IN_PROGRESS,
-        details={"message": "Architect is analyzing the request."}
-    )
-    
-    # Simulate a brief delay for planning
-    await asyncio.sleep(1.0)
-    session_data["steps_completed"] += 1
-    
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Planning",
-        status=PhaseStatus.COMPLETED,
-        details={"message": "Plan formulated.", "plan_length": 3}
-    )
-    
-    # Simulate execution phase
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Execution",
-        status=PhaseStatus.IN_PROGRESS,
-        details={"message": "DevAgent is implementing the plan."}
-    )
-    
-    await asyncio.sleep(1.5)
-    session_data["steps_completed"] += 1
-    
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Execution",
-        status=PhaseStatus.COMPLETED,
-        details={"message": "Code generated and written via NodeForge."}
-    )
-    
-    # Simulate QA phase
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Verification",
-        status=PhaseStatus.IN_PROGRESS,
-        details={"message": "PulseAgent is running tests."}
-    )
-    
-    await asyncio.sleep(1.0)
-    session_data["steps_completed"] += 1
-    
-    yield PhaseUpdate(
-        session_id=session_id,
-        phase="Verification",
-        status=PhaseStatus.COMPLETED,
-        details={"message": "All tests passed."}
-    )
-    
-    # End of execution
-    NodeLog.emit("EXECUTION_COMPLETED", {"session_id": session_id})
-
+    yield PhaseUpdate(session_id=session_id, phase="Execution", status=PhaseStatus.IN_PROGRESS,
+                      details={"message": "Autonomous execution started"})
+    runner = NodeCore(workspace_root=session_handle.workspace_path, llm_config=session_data["llm_config"])
+    try:
+        result = await asyncio.to_thread(
+            runner.start_task, prompt, max_rounds=session_data["max_rounds"],
+            should_stop=lambda: session_data.get("cancelled", False),
+        )
+    except asyncio.CancelledError:
+        session_data["cancelled"] = True
+        raise
+    session_data["result"] = result
+    session_data["steps_completed"] = len(result["completed_phases"])
+    completed = result["status"] == "COMPLETED"
+    session_data["status"] = SessionStatus.COMPLETED if completed else SessionStatus.INCOMPLETE
+    cancelled = result["status"] == "CANCELLED"
+    if cancelled:
+        session_data["status"] = SessionStatus.CANCELLED
+    yield PhaseUpdate(session_id=session_id, phase="Verification",
+                      status=PhaseStatus.COMPLETED if completed else PhaseStatus.CANCELLED if cancelled else PhaseStatus.FAILED,
+                      details=result)
 
 def dispatch_remote_task(session_handle: SessionHandle, target: str, payload: dict) -> JobStatus:
     """
@@ -213,14 +176,16 @@ def terminate_session(session_handle: SessionHandle) -> SessionSummary:
         raise ValueError(f"Invalid session ID: {session_id}")
         
     session_data = _ACTIVE_SESSIONS[session_id]
+    session_data["cancelled"] = True
     session_data["status"] = SessionStatus.TERMINATED
     
     summary = SessionSummary(
         session_id=session_id,
-        total_steps=3, # Mock value
+        total_steps=5,
         completed_steps=session_data["steps_completed"],
         final_status=SessionStatus.TERMINATED,
-        metrics={"duration_seconds": 3.5}
+        metrics={"duration_seconds": (datetime.now(timezone.utc) - session_data["started_at"]).total_seconds(),
+                 "task_status": session_data.get("result", {}).get("status", "CANCELLED")}
     )
     
     NodeLog.emit("SESSION_TERMINATED", {"session_id": session_id, "summary": summary.model_dump()})
@@ -501,11 +466,35 @@ class NodeCore:
         self.current_plan: Optional[RemediationPlan] = None
         self.history: List[Dict[str, Any]] = []
 
-    def start_task(self, task_prompt: str, max_rounds: int = 30) -> Dict[str, Any]:
+    def start_task(self, task_prompt: str, max_rounds: int = 30,
+                   acceptance: Optional[Dict[str, Any]] = None,
+                   should_stop: Optional[Callable[[], bool]] = None) -> Dict[str, Any]:
+        """Keep setup failures as reviewable outcomes, like execution failures."""
+        try:
+            return self._start_task(task_prompt, max_rounds, acceptance, should_stop)
+        except Exception as exc:
+            self.status = "FAILED"
+            report = {"status": "FAILED", "termination_reason": str(exc), "original_task": task_prompt,
+                      "rounds": 0, "turns": 0, "max_rounds": max_rounds, "messages": [],
+                      "message_count": 0, "responses_received": 0, "commands": [], "verification": [],
+                      "completed_phases": [], "remaining_requirements": ["Task setup or evidence persistence failed"]}
+            path = Path(self.workspace_root) / ".cloudcode" / "runs" / f"{uuid.uuid4().hex}.json"
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                report["report_path"] = str(path.resolve())
+                path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+            except OSError as storage_error:
+                report.update(report_path=None, evidence_error=str(storage_error))
+            self.emit_telemetry("TASK_FINISHED", "WARN", str(exc), payload=report)
+            return report
+
+    def _start_task(self, task_prompt: str, max_rounds: int = 30,
+                   acceptance: Optional[Dict[str, Any]] = None,
+                   should_stop: Optional[Callable[[], bool]] = None) -> Dict[str, Any]:
         """
-        Execute an autonomous task using AutoGen multi-agent group conversation.
-        Instantiates UserProxyRunner, ArchitectAgent, DevAgent, and PulseAgent,
-        binds all tools to the agents, streams turns to NodeLog, and initiates the chat.
+        Execute the CoderAgent/UserProxyRunner conversation with explicit evidence.
+        max_rounds counts model responses including local processing of the last
+        response; completion is decided by TaskWorkflow rather than chat exit.
         """
         self.emit_telemetry(
             event_type="TASK_STARTED",
@@ -521,9 +510,14 @@ class NodeCore:
         if not self.tools:
             self.tools = configure_tools(self.workspace_root)
 
-        # 1. Provision AutoGen Agents (Streamlined 2-agent architecture for Qwen-Coder)
-        user_proxy = create_user_proxy_runner("UserProxyRunner", workspace_path=self.workspace_root)
+        # One configured round permits one coder response and its local processing.
+        user_proxy = create_user_proxy_runner("UserProxyRunner", workspace_path=self.workspace_root,
+                                              max_rounds=max_rounds, task_prompt=task_prompt,
+                                              acceptance=acceptance, should_stop=should_stop)
+        workflow = user_proxy.workflow
         coder = create_coder_agent(self.llm_config)
+        coder.human_input_mode = "NEVER"
+        coder.update_max_consecutive_auto_reply(max_rounds)
 
         # 2. Attach telemetry hooks to broadcast each message to NodeLog
         original_user_send = user_proxy.send
@@ -549,31 +543,59 @@ class NodeCore:
         coder.send = logged_coder_send
 
         # 3. Initiate Autonomous Coder <-> UserProxy Conversation with Phased Prompt
-        phased_prompt = prepare_phased_task_prompt(task_prompt)
+        phased_prompt = prepare_phased_task_prompt(task_prompt) + "\n\n" + workflow.context()
+        messages = []
         try:
-            chat_result = user_proxy.initiate_chat(
-                coder,
-                message=phased_prompt,
-                max_turns=max_rounds
-            )
-            final_status = "COMPLETED"
-            messages = chat_result.chat_history if hasattr(chat_result, "chat_history") else []
+            if should_stop and should_stop():
+                workflow.stop("CANCELLED", "User requested cancellation")
+            else:
+                chat_result = user_proxy.initiate_chat(
+                    coder, message=phased_prompt, max_turns=max_rounds
+                )
+                messages = chat_result.chat_history
+                # AutoGen 0.2.35 does not call the proxy handler for the last
+                # response when max_turns expires. Consume it exactly once.
+                response_count = sum(m.get("role") == "user" for m in messages)
+                if (workflow.status == "IN_PROGRESS" and response_count > workflow.rounds
+                        and messages[-1].get("role") == "user"):
+                    workflow.consume_messages(messages)
+                if workflow.status == "IN_PROGRESS":
+                    workflow.stop("INCOMPLETE", "Conversation ended before verification completed")
+        except KeyboardInterrupt:
+            workflow.stop("CANCELLED", "Execution interrupted")
         except Exception as e:
             NodeLog.emit("TASK_ERROR", {"error": str(e), "source": "NodeCore"})
-            final_status = f"ERROR: {e}"
-            messages = []
+            status = "TIMEOUT" if "timeout" in type(e).__name__.lower() else "FAILED"
+            workflow.stop(status, str(e))
+            messages = user_proxy.chat_messages.get(coder, [])
+
+        report = workflow.report()
+        report.update(messages=messages, message_count=len(messages), turns=workflow.rounds)
+        final_status = report["status"]
+        self.status = final_status
+        report_path = Path(self.workspace_root) / ".cloudcode" / "runs" / f"{uuid.uuid4().hex}.json"
+        try:
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        except OSError as exc:
+            report.update(status="FAILED", evidence_error=str(exc),
+                          termination_reason="Could not persist run evidence; in-memory evidence retained")
+            self.status = final_status = "FAILED"
 
         self.emit_telemetry(
-            event_type="TASK_COMPLETED",
-            status_level="SUCCESS" if "COMPLETED" in final_status else "ERROR",
+            event_type="TASK_COMPLETED" if final_status == "COMPLETED" else "TASK_FINISHED",
+            status_level="SUCCESS" if final_status == "COMPLETED" else "WARN",
             message=f"Autonomous task execution finished with status: {final_status}",
-            payload={"turns": len(messages), "final_status": final_status}
+            payload={"rounds": workflow.rounds, "final_status": final_status,
+                     "termination_reason": workflow.reason, "report_path": str(report_path)}
         )
 
         return {
-            "status": final_status,
+            **report,
             "messages": messages,
-            "turns": len(messages)
+            "turns": workflow.rounds,
+            "message_count": len(messages),
+            "report_path": str(report_path.resolve()) if "evidence_error" not in report else None
         }
 
 
@@ -895,4 +917,3 @@ class NodeCore:
                 action="custom",
                 parameters=ctx
             )
-

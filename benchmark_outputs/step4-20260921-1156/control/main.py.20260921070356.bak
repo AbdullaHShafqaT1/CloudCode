@@ -1,0 +1,12 @@
+
+import sys
+from app_logic import summarize
+
+if __name__ == "__main__":
+    try:
+        values = [int(arg) for arg in sys.argv[1:]]
+        result = summarize(values)
+        print(format_summary(result))
+    except (ValueError, TypeError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)

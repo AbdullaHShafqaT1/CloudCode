@@ -1,0 +1,14 @@
+
+import json
+
+def format_summary(result):
+    """
+    Formats the summary dictionary into a JSON string.
+
+    Parameters:
+    result (dict): A dictionary containing the summary data.
+
+    Returns:
+    str: A JSON formatted string representing the summary.
+    """
+    return json.dumps(result, indent=4)

@@ -1,0 +1,173 @@
+{
+  "requirements": [
+    {
+      "requirement": "Initial 32-piece position and JSON state",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Legal movement for all six piece types",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Two human players and turn enforcement",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Illegal/malformed moves rejected without mutation",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Captures and persistent move sequence",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "King safety",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Pinned pieces",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Check detection",
+      "status": "verified",
+      "evidence": "test_08_check"
+    },
+    {
+      "requirement": "Checkmate, winner and postgame rejection",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Stalemate",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Both sides' kingside/queenside castling",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Castling restrictions",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "En passant capture",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "En passant expiration",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "All four engine promotion choices",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Engine reset",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Fifty-move and insufficient-material draws",
+      "status": "verified",
+      "evidence": "test_draw_handling"
+    },
+    {
+      "requirement": "Claimable repetition draw",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Real documented CLI launch",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Visible 8x8 alternating board and 32 Unicode pieces",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Selection and legal-destination highlighting",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Browser two-player moves, capture and turn updates",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Browser new game resets position",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Browser checkmate and winner",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Browser promotion choice and draw display",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Browser check and stalemate displays",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Piece accessible labels and two-player instructions",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "HTTP state, move, error JSON and reset",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "HTTP position load through the same engine",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Bounded HTTP request sizes and bad JSON handling",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Each server owns a fresh game",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "Import without starting servers/windows",
+      "status": "unverified",
+      "evidence": null
+    },
+    {
+      "requirement": "No network assets or CDN",
+      "status": "unverified",
+      "evidence": null
+    }
+  ],
+  "verified": 2,
+  "total": 33,
+  "percent": 6.06,
+  "method": "Equal-weight functional requirement groups fixed before generation; no file-count credit. Failed grouped tests receive no partial credit. Documentation/generated tests reported separately."
+}

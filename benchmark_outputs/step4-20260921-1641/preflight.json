@@ -1,0 +1,118 @@
+{
+  "started_at": "2026-09-21T11:41:54.758535+00:00",
+  "local_time": "2026-09-21T16:41:54.758535+05:00",
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "python_executable": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+  "git_commit": "4ef7be127ecb9442b1650615ed3c234087be70e2",
+  "working_tree": [
+    " M LegacyBridge/legacynode/bridge_adapter.py",
+    " M LegacyBridge/legacynode/core/agent_controller.py",
+    " M LegacyBridge/legacynode/core/state_manager.py",
+    " M LegacyBridge/legacynode/tools/file_reader.py",
+    " M LegacyBridge/legacynode/tools/file_writer.py",
+    " M LegacyBridge/legacynode/tools/terminal_executor.py",
+    " M LegacyBridge/test_colab_bridge.py",
+    " M LegacyBridge/test_real_integration.py",
+    " M NodeCore/node_core/agents.py",
+    " M NodeCore/node_core/core.py",
+    " M NodeCore/node_core/schemas.py",
+    " M NodeCore/node_core/tools.py",
+    " M NodeCore/test_node_core.py",
+    " M NodeLink/test_node_link.py",
+    " M NodePulse/terminal_executor.py",
+    " M launcher_gui.py",
+    " M orchestrator_config.json",
+    " M run_orchestrator.py",
+    " M test_bridge_full_toolchain_integration.py",
+    " M test_integration_nodecore.py",
+    " M test_launcher.py",
+    "?? DIAGNOSTIC_REPORT.md",
+    "?? NodeCore/node_core/verification_runner.py",
+    "?? NodeCore/node_core/workflow.py",
+    "?? NodeCore/test_document_fences.py",
+    "?? NodeCore/test_step3_hardening.py",
+    "?? NodeCore/test_task_workflow.py",
+    "?? NodeForge/tools/unified_patch.py",
+    "?? NodePulse/process_job.py",
+    "?? STEP3_REPORT.md",
+    "?? benchmark_outputs/",
+    "?? benchmarks/",
+    "?? pytest.ini"
+  ],
+  "configuration_sha256_before": "fe68f9054e01c64c948c3a89233aba44913c145a991c5037b677b7dfe393bb88",
+  "endpoint": "https://association-safely-tucson-explicitly.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "model_response_budget": 50,
+  "request_timeout_seconds": 120,
+  "max_output_tokens": 4096,
+  "temperature": 0.2,
+  "openai_sdk_default_max_retries": 2,
+  "terminal_default_timeout_seconds": 60,
+  "stall_limit": 4,
+  "endpoint_override_environment_present": false,
+  "requested_mode": "LIVE",
+  "mock_model_or_response_used": false,
+  "benchmark_output": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641",
+  "control_workspace": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\control",
+  "chess_workspace": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess",
+  "versions": {
+    "pyautogen": "0.2.35",
+    "openai": "1.109.1",
+    "pytest": "9.1.1"
+  },
+  "requests": [
+    {
+      "url": "https://association-safely-tucson-explicitly.trycloudflare.com/v1/models",
+      "method": "GET",
+      "started_at": "2026-09-21T11:41:54.865314+00:00",
+      "http_status": 200,
+      "model_ids": [
+        "qwen2.5-coder:32b"
+      ],
+      "elapsed_seconds": 0.422
+    },
+    {
+      "url": "https://association-safely-tucson-explicitly.trycloudflare.com/v1/chat/completions",
+      "method": "POST",
+      "started_at": "2026-09-21T11:41:55.280507+00:00",
+      "http_status": 200,
+      "response_model": "qwen2.5-coder:32b",
+      "response_id": "chatcmpl-colab-1789990915",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "LIVE_PREFLIGHT_OK"
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 3,
+        "completion_tokens": 1,
+        "total_tokens": 4
+      },
+      "elapsed_seconds": 0.609,
+      "request_payload": {
+        "model": "qwen2.5-coder:32b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply exactly: LIVE_PREFLIGHT_OK"
+          }
+        ],
+        "max_tokens": 20,
+        "temperature": 0
+      }
+    }
+  ],
+  "benchmark_user_prompts_submitted": 0,
+  "benchmark_model_responses": 0,
+  "benchmarks_started": false,
+  "ready": true,
+  "reason": "Live completion received",
+  "configuration_sha256_after": "fe68f9054e01c64c948c3a89233aba44913c145a991c5037b677b7dfe393bb88",
+  "finished_at": "2026-09-21T11:41:55.889315+00:00"
+}

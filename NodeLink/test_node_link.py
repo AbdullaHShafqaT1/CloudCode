@@ -579,6 +579,8 @@ class TestDisconnectedTunnelHandling(unittest.IsolatedAsyncioTestCase):
                 pass
 
         mock_ct.assert_called_once()
+        for coro in created_coros:
+            coro.close()
 
 
 # ===========================================================================

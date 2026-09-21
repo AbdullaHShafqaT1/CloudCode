@@ -45,6 +45,7 @@ class TestConfigManager:
         assert "task_prompt" in cfg
 
     def test_save_and_reload_config(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("TUNNEL_URL", raising=False)
         fake_cfg_file = tmp_path / "test_config.json"
         monkeypatch.setattr("launcher_gui.get_config_path", lambda: fake_cfg_file)
 
@@ -137,7 +138,10 @@ class TestTkinterApp:
     def test_gui_lifecycle_and_widgets(self):
         import tkinter as tk
 
-        root = tk.Tk()
+        try:
+            root = tk.Tk()
+        except tk.TclError as exc:
+            pytest.skip(f"Native Tk unavailable in this runtime: {exc}")
         root.withdraw()  # Hide window during test
 
         test_cfg = {

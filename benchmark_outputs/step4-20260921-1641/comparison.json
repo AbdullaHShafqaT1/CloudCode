@@ -1,0 +1,91 @@
+{
+  "responses": [
+    {
+      "response": 1,
+      "http_status": 200,
+      "response_characters": 2000,
+      "body_sha256": "a722653c38917a7315b82a5781bb099caf69682c94ea49ca18a3b84762b6f942",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 2,
+      "http_status": 200,
+      "response_characters": 4587,
+      "body_sha256": "60e8c904147ab064ad7a7156e8fcaf8126602981ac18a32569232d8c3016ed96",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 3,
+      "http_status": 200,
+      "response_characters": 2781,
+      "body_sha256": "96f0d1cf95f9302a48c5cd72483a5196baf7b72d6926645b4632adc501cf1f36",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 4,
+      "http_status": 200,
+      "response_characters": 4562,
+      "body_sha256": "74ea89f883bc9f810fd7df4b75d261399eb3cc281cc516253340d636b682365a",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 5,
+      "http_status": 200,
+      "response_characters": 4621,
+      "body_sha256": "86531b043e5d783b06deb93ec21740cea97033d653345525ca2e61e907b9d1b1",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 6,
+      "http_status": 200,
+      "response_characters": 1862,
+      "body_sha256": "fa552073f995407eea7d898d811ee19d5161e7b76c8f72817eb0e0966435844d",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 7,
+      "http_status": 200,
+      "response_characters": 1862,
+      "body_sha256": "fa552073f995407eea7d898d811ee19d5161e7b76c8f72817eb0e0966435844d",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 8,
+      "http_status": 200,
+      "response_characters": 1862,
+      "body_sha256": "fa552073f995407eea7d898d811ee19d5161e7b76c8f72817eb0e0966435844d",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    },
+    {
+      "response": 9,
+      "http_status": 200,
+      "response_characters": 1862,
+      "body_sha256": "fa552073f995407eea7d898d811ee19d5161e7b76c8f72817eb0e0966435844d",
+      "matches_previous_response": true,
+      "reported_finish_reason": "stop"
+    }
+  ],
+  "previous_response_count": 9,
+  "new_response_count": 9,
+  "previous_workflow_status": "STALLED",
+  "new_workflow_status": "STALLED",
+  "source_and_configuration_unchanged": true,
+  "source_hashes_after": {
+    "NodeCore/node_core/agents.py": "622dca5857b0b830d89572daba8cd36ac912d60f77940bac366a138dd37fc7f4",
+    "NodeCore/node_core/workflow.py": "7185011d683eecb49eab590998141466d85a30501f257c9449048f7bf4124c30",
+    "NodeCore/node_core/core.py": "bc953b38c1425ee1fda0503affadb8f25c1c68669071d6022d48babeab487d0a",
+    "launcher_gui.py": "873ce6e9ad9343135b894bbf9f49fed3718f719dfe4d2a3ad40d602911311f81",
+    "orchestrator_config.json": "fe68f9054e01c64c948c3a89233aba44913c145a991c5037b677b7dfe393bb88"
+  },
+  "prompt_unchanged": true,
+  "checker_unchanged": true,
+  "final_files_match_verified": true
+}

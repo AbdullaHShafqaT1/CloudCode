@@ -1,0 +1,18 @@
+
+## Installation
+
+1. **Install Python**: Ensure Python 3.x is installed on your system.
+2. **Install Dependencies**:
+   - Open a terminal or command prompt.
+   - Navigate to the directory containing `requirements.txt`.
+   - Run the following command to install the required packages:
+     ```bash
+     pip install -r requirements.txt
+     ```
+
+## Usage
+
+1. **Run the Server**:
+   - Open a terminal or command prompt.
+   - Navigate to the directory containing `main.py`.
+   - Run the server using the following command:

@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Ensure UTF-8 console output on Windows
-if sys.platform == "win32":
+if sys.platform == "win32" and __name__ == "__main__":
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
@@ -38,6 +38,9 @@ def get_user_endpoint(params: dict):
 Task: Explain why calling get_user_endpoint({"user_id": "101"}) fails, and provide the fixed code for api.py.'''
 
 async def test():
+    if not os.environ.get("CLOUDCODE_RUN_LIVE_TESTS"):
+        import pytest
+        pytest.skip("Live model test requires CLOUDCODE_RUN_LIVE_TESTS; reserved for Step 4")
     base_url = COLAB_TUNNEL_URL.rstrip('/') + '/v1'
     print(f'\n[INIT] Target Endpoint: {base_url}')
     print(f'[INIT] Model: {MODEL_NAME}')

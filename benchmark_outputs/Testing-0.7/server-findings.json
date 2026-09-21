@@ -1,0 +1,12 @@
+{
+  "notebook": "https://colab.research.google.com/drive/1H5MC9l17QyAYKIo22daaaYKkoMgb-0vn?usp=sharing",
+  "loaded_model_in_cell_2": "Qwen/Qwen2.5-Coder-3B-Instruct",
+  "advertised_model": "qwen2.5-coder:32b",
+  "hardcoded_max_new_tokens": 1000,
+  "conversation_forwarding": "Only last user message; system and prior turns discarded",
+  "usage": "len(user_prompt.split()), len(model_reply.split())",
+  "finish_reason": "Always stop, including truncation",
+  "notebook_access": "Public read-only, signed out; no connected runtime control",
+  "qualification": "INVALID_MODEL_IDENTITY",
+  "original_checker_unchanged": true
+}

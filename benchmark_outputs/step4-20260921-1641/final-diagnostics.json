@@ -1,0 +1,42 @@
+{
+  "checked_at": "2026-09-21T11:51:27.733968+00:00",
+  "records": [
+    {
+      "run": "chess",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "-I",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess-generated-tests.json"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess",
+      "exit_code": 1,
+      "result": {
+        "tests_run": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "successful": true
+      },
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess-generated-tests.log",
+      "files_unchanged": true
+    },
+    {
+      "run": "chess",
+      "purpose": "Exact requested launch command; generated documentation contains no complete command",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "main.py",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8765"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess",
+      "exit_code": 1,
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1641\\chess-required-launch.log",
+      "files_unchanged": true
+    }
+  ]
+}

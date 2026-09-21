@@ -1,0 +1,17 @@
+{
+  "prepared_at": "2026-09-21T11:42:48.228736+00:00",
+  "reason": "User requested rerun after providing replacement cloud-session URL",
+  "scope": "One fresh chess benchmark and repeated final local checks; prior control runs retained, not resubmitted",
+  "previous_report": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\STEP4_LIVE_BENCHMARK_REPORT.md",
+  "source_hashes_before": {
+    "NodeCore/node_core/agents.py": "622dca5857b0b830d89572daba8cd36ac912d60f77940bac366a138dd37fc7f4",
+    "NodeCore/node_core/workflow.py": "7185011d683eecb49eab590998141466d85a30501f257c9449048f7bf4124c30",
+    "NodeCore/node_core/core.py": "bc953b38c1425ee1fda0503affadb8f25c1c68669071d6022d48babeab487d0a",
+    "launcher_gui.py": "873ce6e9ad9343135b894bbf9f49fed3718f719dfe4d2a3ad40d602911311f81",
+    "orchestrator_config.json": "fe68f9054e01c64c948c3a89233aba44913c145a991c5037b677b7dfe393bb88"
+  },
+  "prompt_identical": true,
+  "checker_identical": true,
+  "approved_max_rounds": 50,
+  "manual_application_edits": 0
+}

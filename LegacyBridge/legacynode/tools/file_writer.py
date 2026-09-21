@@ -45,7 +45,7 @@ class FileWriter:
 
     def _safe_path(self, path: str) -> Path:
         resolved = (self._root / path).resolve()
-        if not str(resolved).startswith(str(self._root)):
+        if not resolved.is_relative_to(self._root):
             raise ValueError(
                 f"Path traversal detected: '{path}' resolves outside workspace root "
                 f"'{self._root}'"
@@ -127,25 +127,24 @@ class FileWriter:
             FileNotFoundError: If the target file doesn't exist.
             ValueError: If the patch fails to apply cleanly.
         """
-        import difflib
+        from NodeForge.tools.unified_patch import apply_unified_patch
 
         safe = self._safe_path(path)
         if not safe.exists():
             raise FileNotFoundError(f"Cannot apply diff: file '{path}' does not exist.")
 
-        async with aiofiles.open(safe, "r", encoding="utf-8", errors="replace") as f:
-            original_lines = await f.readlines()
+        async with aiofiles.open(safe, "r", encoding="utf-8") as f:
+            original = await f.read()
 
         # Parse the unified diff and apply via difflib
         patch_lines = unified_diff.splitlines(keepends=True)
         try:
-            result = list(difflib.restore(patch_lines, which=2))
+            new_content = apply_unified_patch(original, unified_diff, path)
         except Exception as e:
             raise ValueError(f"Failed to parse unified diff: {e}") from e
 
         # Backup then write patched content
         self._backup(safe)
-        new_content = "".join(result)
         await self.write_file(path, new_content)
 
         added = sum(1 for l in patch_lines if l.startswith("+") and not l.startswith("+++"))

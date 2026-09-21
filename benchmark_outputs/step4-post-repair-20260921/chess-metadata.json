@@ -1,0 +1,17 @@
+{
+  "started_at": "2026-09-21T16:45:17.256115+00:00",
+  "endpoint": "https://prescribed-douglas-donate-skins.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "max_rounds": 50,
+  "cache_seed": null,
+  "mode": "LIVE",
+  "user_application_prompts": 1,
+  "workspace": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-post-repair-20260921\\chess",
+  "manual_application_edits": 0,
+  "entrypoint": "launcher_gui.run_autonomous_orchestrator (shared GUI/CLI worker)",
+  "prompt_file": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-post-repair-20260921\\chess-prompt.txt",
+  "checker_sha256": "9f1e948334c5bee30f5bacf84cd128e0142eb37ac5c0d374ef30f0c516920bcf",
+  "finished_at": "2026-09-21T16:59:34.029724+00:00",
+  "elapsed_seconds": 856.781,
+  "checker_unchanged": true
+}

@@ -1,0 +1,216 @@
+{
+  "started_at": "2026-09-21T17:48:40.565247+00:00",
+  "workspace": "C:\\Users\\Acer\\Desktop\\projects\\tests\\Testing-0.7",
+  "evidence": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\Testing-0.7",
+  "reason": "Fix valid-Python artifact rejection, align execution environment, permit API inspection during repair, bound inference history and grant inspect-repair recovery window; 531 tests passed.",
+  "endpoint": "https://prescribed-douglas-donate-skins.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "response_limit": 50,
+  "max_tokens": 16384,
+  "cache_seed": null,
+  "manual_application_edits": 0,
+  "prompt_sha256": "782ccd82b78c53dfe81a8c04ff2d5e8d71c910d003cbe86e08e90168fd0be821",
+  "checker_sha256": "9f1e948334c5bee30f5bacf84cd128e0142eb37ac5c0d374ef30f0c516920bcf",
+  "source_manifest_sha256": "d3b8ba6e2e95bd13d377b3af2e37d4f79f8de6e7401ff5c3ca43f3b67b479e0d",
+  "git_commit": "4ef7be127ecb9442b1650615ed3c234087be70e2",
+  "git_status": " M LegacyBridge/legacynode/bridge_adapter.py\n M LegacyBridge/legacynode/core/agent_controller.py\n M LegacyBridge/legacynode/core/state_manager.py\n M LegacyBridge/legacynode/tools/file_reader.py\n M LegacyBridge/legacynode/tools/file_writer.py\n M LegacyBridge/legacynode/tools/terminal_executor.py\n M LegacyBridge/test_colab_bridge.py\n M LegacyBridge/test_real_integration.py\n M NodeCore/node_core/agents.py\n M NodeCore/node_core/core.py\n M NodeCore/node_core/schemas.py\n M NodeCore/node_core/tools.py\n M NodeCore/test_node_core.py\n M NodeLink/test_node_link.py\n M NodePulse/terminal_executor.py\n M launcher_gui.py\n M orchestrator_config.json\n M run_orchestrator.py\n M test_bridge_full_toolchain_integration.py\n M test_integration_nodecore.py\n M test_launcher.py\n?? DIAGNOSTIC_REPORT.md\n?? NodeCore/node_core/verification_runner.py\n?? NodeCore/node_core/workflow.py\n?? NodeCore/test_controlled_recovery.py\n?? NodeCore/test_document_fences.py\n?? NodeCore/test_mission_reliability.py\n?? NodeCore/test_post_repair_fixes.py\n?? NodeCore/test_repair_loop.py\n?? NodeCore/test_step3_hardening.py\n?? NodeCore/test_task_workflow.py\n?? NodeForge/tools/unified_patch.py\n?? NodePulse/process_job.py\n?? STEP3_REPORT.md\n?? benchmark_outputs/\n?? benchmarks/\n?? pytest.ini\n",
+  "configuration": {
+    "tunnel_url": "https://subscription-loves-bay-feeds.trycloudflare.com",
+    "workspace_root": "C:\\Users\\Acer\\Desktop\\projects\\tests\\TESTING-0.2",
+    "model": "qwen2.5-coder",
+    "max_rounds": 50,
+    "task_prompt": "TASK: Build a Complete GUI-Based 2-Player Chess Game with Full Rules & Save System\n\nObjective:\nCreate a complete, fully functional, beautiful desktop Chess game in Python using standard `tkinter`.\nThe application entrypoint must be `main.py`.\n\nRequirements & Architecture:\n1. `chess_logic.py`:\n   - Represent the 8x8 board as an 8x8 grid: None for empty, strings like 'wP','wR','wN','wB','wQ','wK' / 'bP','bR','bN','bB','bQ','bK'.\n   - Class `ChessGame`:\n     * `self.board`: 8x8 matrix with standard initial 32 pieces setup (ranks 0-1 for Black, 6-7 for White).\n     * `self.current_turn`: 'W' (White moves first).\n     * `get_piece(row, col)` -> piece string or None.\n     * `get_legal_moves(row, col)` -> list of valid (target_r, target_c) coordinates for the piece at (row, col).\n       - Pawns: forward 1 (or 2 from home row), diagonal captures.\n       - Knights: 8 possible (dr, dc) L-shaped leaps.\n       - Bishops: diagonals ray-cast until blocked.\n       - Rooks: orthogonal ray-cast until blocked.\n       - Queens: combination of Rook and Bishop ray-casts.\n       - Kings: 1 step in all 8 directions.\n     * `make_move(from_pos, to_pos)` -> bool: executes move if legal, switches turn ('W' <-> 'B').\n     * `is_in_check(color)` -> bool: checks if color's King is under attack.\n     * `save_game(filepath)` and `load_game(filepath)`: JSON serialization of board and current_turn.\n\n2. `chess_gui.py`:\n   - Modern Tkinter GUI with responsive 8x8 Canvas board:\n     * Alternating squares (#EEEED2 light, #769656 dark).\n     * Render pieces directly with Unicode glyphs via canvas.create_text(x, y, text=glyph, font=('Arial', 32)):\n       UNICODE_PIECES = {'wK':'\u2654', 'wQ':'\u2655', 'wR':'\u2656', 'wB':'\u2657', 'wN':'\u2658', 'wP':'\u2659', 'bK':'\u265a', 'bQ':'\u265b', 'bR':'\u265c', 'bB':'\u265d', 'bN':'\u265e', 'bP':'\u265f'}\n       (DO NOT use external image files or PhotoImage).\n     * Click a piece to select: highlight selected square and legal destinations.\n     * Click a legal destination square to execute move.\n     * Header banner with current turn ('White to move' / 'Black to move') and Check warning.\n     * Control bar with buttons: [New Game], [Save Game], [Load Game].\n     * Winner / Checkmate dialog popup.\n\n3. `main.py`:\n   - Application launcher initializing `ChessGame` and starting `ChessGUI`.\n\n4. `test_chess.py`:\n   - Headless unit test suite (using standard `unittest`) verifying:\n     * Initial board layout (32 pieces correctly placed).\n     * Pawn opening move (e.g. from row 6 to 4).\n     * Knight leap over pawn.\n     * Turn alternating (W -> B -> W).\n     * Simple check detection.\n     * JSON save and load consistency.\n\n5. `RunningGUIDE.txt`:\n   - User guide detailing launch instructions (`python main.py`), controls (click to select and move), and rules.\n\nExecution Directives:\n- Generate ONE complete file per turn in order:\n  Turn 1: `chess_logic.py`\n  Turn 2: `chess_gui.py`\n  Turn 3: `main.py`\n  Turn 4: `test_chess.py`\n  Turn 5: `RunningGUIDE.txt`\n- Output EACH file in its own Markdown code block with `# filename: <filename>` on line 1.\n- Provide 100% complete source code (no placeholders, no omissions).\n- Conclude with TERMINATE on its own line ONLY after all 5 files are created and unit tests pass."
+  },
+  "python": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+  "status": "INTERRUPTED_MODEL_MISMATCH",
+  "responses": 10,
+  "browser_result": "failed: see independent.log",
+  "launch_result": "HTTP server responded, complete browser launch/playthrough failed",
+  "independent_acceptance": false,
+  "qualification": "DISQUALIFIED: loaded model is 3B, required model is 32B",
+  "evidence_finalized_at": "2026-09-21T18:04:12.937735+00:00",
+  "generated_files": {
+    "chess_gui.py": "a9bee385bf9e11ef30d7c3bece3f3bd6e7fe55c0d74e888fc27ba07c3987c044",
+    "chess_logic.py": "14577b3c826d7dc6d4f80333a9afd7a8d80ab6d56b6304422aa4ec7c1fce21b5",
+    "main.py": "d33ebff9589c75a5e624a9180e49f1fdbc2d6d7299c76d52a7fe8818a2cba1e7"
+  },
+  "functional_completion": {
+    "requirements": [
+      {
+        "requirement": "Initial 32-piece position and JSON state",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Legal movement for all six piece types",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Two human players and turn enforcement",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Illegal/malformed moves rejected without mutation",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Captures and persistent move sequence",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "King safety",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Pinned pieces",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Check detection",
+        "status": "verified",
+        "evidence": "test_08_check"
+      },
+      {
+        "requirement": "Checkmate, winner and postgame rejection",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Stalemate",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Both sides' kingside/queenside castling",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Castling restrictions",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "En passant capture",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "En passant expiration",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "All four engine promotion choices",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Engine reset",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Fifty-move and insufficient-material draws",
+        "status": "verified",
+        "evidence": "test_draw_handling"
+      },
+      {
+        "requirement": "Claimable repetition draw",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Real documented CLI launch",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Visible 8x8 alternating board and 32 Unicode pieces",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Selection and legal-destination highlighting",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Browser two-player moves, capture and turn updates",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Browser new game resets position",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Browser checkmate and winner",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Browser promotion choice and draw display",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Browser check and stalemate displays",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Piece accessible labels and two-player instructions",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "HTTP state, move, error JSON and reset",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "HTTP position load through the same engine",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Bounded HTTP request sizes and bad JSON handling",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Each server owns a fresh game",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "Import without starting servers/windows",
+        "status": "unverified",
+        "evidence": null
+      },
+      {
+        "requirement": "No network assets or CDN",
+        "status": "unverified",
+        "evidence": null
+      }
+    ],
+    "verified": 2,
+    "total": 33,
+    "percent": 6.06,
+    "method": "Equal-weight functional requirement groups fixed before generation; no file-count credit. Failed grouped tests receive no partial credit. Documentation/generated tests reported separately."
+  },
+  "failure_causes": [
+    "Actual 3B model falsely advertised as 32B",
+    "Serving layer discards history and ignores max_tokens",
+    "Generated engine/HTTP/browser acceptance failures"
+  ],
+  "workflow_final_result": "Unavailable: intentionally interrupted after model mismatch established"
+}

@@ -1,0 +1,31 @@
+
+from chess import Board, Move, Piece, Color, CastleRights, Status
+
+class Game:
+    def __init__(self, fen=None):
+        self.board = Board(fen) if fen else Board()
+
+    def move(self, uci):
+        try:
+            move = Move.from_uci(uci)
+            if move in self.board.legal_moves:
+                self.board.push(move)
+                return self.state()
+            else:
+                raise ValueError("Illegal move")
+        except ValueError as e:
+            raise ValueError(str(e))
+
+    def reset(self):
+        self.board.reset()
+        return self.state()
+
+    def state(self):
+        return {
+            "fen": str(self.board),
+            "turn": "white" if self.board.turn == Color.white else "black",
+            "pieces": {square: str(piece) if piece else "" for square, piece in self.board.piece_map().items()},
+            "legal_moves": [str(move) for move in self.board.legal_moves],
+            "status": self.board.status.name,
+            "winner": self.board.result() if self.board.is_game_over() else None
+        }

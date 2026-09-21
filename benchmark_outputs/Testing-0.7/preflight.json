@@ -1,0 +1,84 @@
+{
+  "started_at": "2026-09-21T17:48:40.706673+00:00",
+  "endpoint": "https://prescribed-douglas-donate-skins.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "python": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+  "requests": [
+    {
+      "url": "https://prescribed-douglas-donate-skins.trycloudflare.com/v1/models",
+      "status": 200,
+      "elapsed_seconds": 0.39100000000325963,
+      "request": null,
+      "response": {
+        "status": "healthy",
+        "models": [
+          {
+            "id": "qwen2.5-coder:32b",
+            "object": "model"
+          }
+        ],
+        "data": [
+          {
+            "id": "qwen2.5-coder:32b",
+            "object": "model"
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://prescribed-douglas-donate-skins.trycloudflare.com/v1/chat/completions",
+      "status": 200,
+      "elapsed_seconds": 0.7339999999967404,
+      "request": {
+        "model": "qwen2.5-coder:32b",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Reply exactly: LIVE_PREFLIGHT_OK"
+          }
+        ],
+        "max_tokens": 24,
+        "temperature": 0
+      },
+      "response": {
+        "id": "chatcmpl-colab-1790012922",
+        "object": "chat.completion",
+        "created": 1790012922,
+        "model": "qwen2.5-coder:32b",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "LIVE_PREFLIGHT_OK"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 3,
+          "completion_tokens": 1,
+          "total_tokens": 4
+        }
+      }
+    }
+  ],
+  "ready": true,
+  "dependencies": {
+    "python-chess": "1.999",
+    "chess": "1.11.2",
+    "playwright": "1.63.0",
+    "pyautogen": "0.2.35",
+    "openai": "1.109.1"
+  },
+  "chess_module": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Lib\\site-packages\\chess\\__init__.py",
+  "api_symbols": {
+    "Board": true,
+    "Move": true,
+    "Color": true,
+    "Status": true,
+    "CastleRights": false
+  },
+  "browser_version": "153.0.8010.12",
+  "finished_at": "2026-09-21T17:48:42.720934+00:00"
+}

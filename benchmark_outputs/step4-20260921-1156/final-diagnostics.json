@@ -1,0 +1,84 @@
+{
+  "checked_at": "2026-09-21T10:57:27.850167+00:00",
+  "records": [
+    {
+      "run": "control",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "-I",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-generated-tests.json"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control",
+      "exit_code": 1,
+      "result": {
+        "tests_run": 10,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "successful": false
+      },
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-generated-tests.log",
+      "files_unchanged": true
+    },
+    {
+      "run": "control-retest",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "-I",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest-generated-tests.json"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest",
+      "exit_code": 1,
+      "result": {
+        "tests_run": 10,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "successful": false
+      },
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-retest-generated-tests.log",
+      "files_unchanged": true
+    },
+    {
+      "run": "chess",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "-I",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\NodeCore\\node_core\\verification_runner.py",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess",
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess-generated-tests.json"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess",
+      "exit_code": 1,
+      "result": {
+        "tests_run": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "successful": true
+      },
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess-generated-tests.log",
+      "files_unchanged": true
+    },
+    {
+      "run": "chess",
+      "purpose": "Exact requested launch command; generated documentation contains no complete command",
+      "command": [
+        "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+        "main.py",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8765"
+      ],
+      "cwd": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess",
+      "exit_code": 1,
+      "log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\chess-required-launch.log",
+      "files_unchanged": true
+    }
+  ]
+}

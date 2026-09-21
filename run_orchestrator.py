@@ -89,7 +89,11 @@ def main():
         help="Probe the endpoint health and print the status report without executing tasks"
     )
 
+    parser.add_argument("--max-rounds", type=int, default=None,
+                        help="Maximum model responses, including processing the last response")
     args = parser.parse_args()
+    if args.max_rounds is not None and args.max_rounds < 1:
+        parser.error("--max-rounds must be positive")
 
     # If --probe-only is requested
     if args.probe_only:
@@ -102,15 +106,19 @@ def main():
         sys.exit(0 if ok else 1)
 
     # Launch GUI or CLI fallback
-    launch_orchestrator(
+    result = launch_orchestrator(
         force_cli=args.cli,
         non_interactive=args.non_interactive,
         tunnel_url=args.tunnel_url,
         workspace_root=args.workspace,
         model=args.model,
-        task_prompt=args.prompt
+        task_prompt=args.prompt,
+        max_rounds=args.max_rounds,
     )
+    if args.non_interactive:
+        return 0 if isinstance(result, dict) and result.get("status") == "COMPLETED" else 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-09-21T07:12:12.853746+00:00",
+  "command": [
+    "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+    "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control_acceptance.py",
+    "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 0.25,
+  "files_before": {
+    "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+    "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+    "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+    "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+  },
+  "files_after": {
+    "app_gui.py": "32cf86d34739fd0bda295b6d185be7d2f00917f177a7d49bf29a559f2de5ff76",
+    "app_logic.py": "2742ee53548fdf9ce79b01c2a34dd4816f8500f5386a5da52cfd498ed9e82854",
+    "main.py": "af5aabf2d37afe1f41285ad4a7aa2d75045af8a5230cdbcf2d779e4ea1c2818a",
+    "test_app.py": "770446bae346079cfadbf02c334850bc3e0f74a5c39590968490641d05cb5828"
+  },
+  "files_unchanged": true,
+  "checker_sha256": "5791fbab3f5278a05c7cf3de8f1d1d2142ef71efe96d1f031690f4df7fffede2",
+  "output_log": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-independent-final.log",
+  "passed": false
+}

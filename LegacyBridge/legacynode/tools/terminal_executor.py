@@ -63,6 +63,7 @@ class TerminalExecutor:
 
         # Line callback for live streaming (set by AgentController)
         self._line_callback: Optional[callable] = None
+        self.should_stop = None
 
     def set_line_callback(self, callback: callable) -> None:
         """Register a callback(line: str) called for each output line."""
@@ -85,7 +86,7 @@ class TerminalExecutor:
         if cwd == ".":
             return self._root
         resolved = (self._root / cwd).resolve()
-        if not str(resolved).startswith(str(self._root)):
+        if not resolved.is_relative_to(self._root):
             raise ValueError(
                 f"Working directory '{cwd}' resolves outside workspace root '{self._root}'"
             )
@@ -135,98 +136,21 @@ class TerminalExecutor:
 
         log.info("Executing command", command=command[:120], cwd=str(safe_cwd))
 
-        # Use shell on Windows, parse args on POSIX for safety
-        use_shell = sys.platform == "win32"
-
-        try:
-            if use_shell:
-                proc = await asyncio.create_subprocess_shell(
-                    command,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=str(safe_cwd),
-                )
-            else:
-                args = shlex.split(command)
-                proc = await asyncio.create_subprocess_exec(
-                    *args,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=str(safe_cwd),
-                )
-
-            stdout_chunks: list[bytes] = []
-            stderr_chunks: list[bytes] = []
-            timed_out = False
-
-            async def _read_stream(stream: asyncio.StreamReader, bucket: list[bytes], prefix: str):
-                total = 0
-                async for line in stream:
-                    total += len(line)
-                    if total <= self._max_output:
-                        bucket.append(line)
-                    decoded = line.decode("utf-8", errors="replace").rstrip()
-                    if self._line_callback:
-                        try:
-                            self._line_callback(f"[{prefix}] {decoded}")
-                        except Exception:
-                            pass
-
-            try:
-                await asyncio.wait_for(
-                    asyncio.gather(
-                        _read_stream(proc.stdout, stdout_chunks, "stdout"),
-                        _read_stream(proc.stderr, stderr_chunks, "stderr"),
-                        proc.wait(),
-                    ),
-                    timeout=effective_timeout,
-                )
-            except asyncio.TimeoutError:
-                timed_out = True
-                log.warning("Command timed out", command=command[:80], timeout=effective_timeout)
-                try:
-                    proc.kill()
-                    await proc.wait()
-                except ProcessLookupError:
-                    pass
-
-            stdout_str = b"".join(stdout_chunks).decode("utf-8", errors="replace")
-            stderr_str = b"".join(stderr_chunks).decode("utf-8", errors="replace")
-
-            if timed_out:
-                stderr_str += f"\n[LegacyNode] Command timed out after {effective_timeout}s."
-
-            result = {
-                "stdout": stdout_str,
-                "stderr": stderr_str,
-                "returncode": proc.returncode if not timed_out else -9,
-                "timed_out": timed_out,
-                "blocked": False,
-                "command": command,
-            }
-            log.info(
-                "Command finished",
-                returncode=result["returncode"],
-                stdout_len=len(stdout_str),
-                stderr_len=len(stderr_str),
-            )
-            return result
-
-        except FileNotFoundError as e:
-            return {
-                "stdout": "",
-                "stderr": f"Command not found: {e}",
-                "returncode": 127,
-                "timed_out": False,
-                "blocked": False,
-                "command": command,
-            }
-        except Exception as e:
-            return {
-                "stdout": "",
-                "stderr": f"Execution error: {e}",
-                "returncode": -1,
-                "timed_out": False,
-                "blocked": False,
-                "command": command,
-            }
+        from NodePulse.terminal_executor import TerminalExecutorTool
+        def output(chunk):
+            if self._line_callback:
+                for line in chunk.splitlines():
+                    try:
+                        self._line_callback(line)
+                    except Exception:
+                        pass
+        result = await TerminalExecutorTool(str(self._root)).run_command(
+            command, cwd=str(safe_cwd), timeout=effective_timeout,
+            should_stop=self.should_stop, on_output=output,
+            max_output_chars=self._max_output,
+        )
+        return {"stdout": result["stdout"],
+                "stderr": result["stderr"] + ("\n" + result["error_message"] if result.get("error_message") else ""),
+                "returncode": result["exit_code"], "timed_out": result["status"] == "timeout",
+                "cancelled": result["status"] == "cancelled", "status": result["status"],
+                "blocked": False, "command": command, "truncated": result["truncated"]}

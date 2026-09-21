@@ -270,14 +270,12 @@ def configure_tools(workspace_root: str, log_dir: Optional[str] = None) -> Dict[
 # Helper to run async methods synchronously when needed
 def _run_async(coro):
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                return pool.submit(asyncio.run, coro).result()
-        return loop.run_until_complete(coro)
+        asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 # ===========================================================================
@@ -296,26 +294,28 @@ class NodeInsight:
     @staticmethod
     def scan_workspace(workspace_path: str) -> Dict[str, Any]:
         """Workspace scanning, AST analysis, and context retrieval."""
+        workspace_path = str((Path(_ACTIVE_WORKSPACE) / workspace_path).resolve())
         tool = NodeInsight.get_tool(workspace_path)
         if tool:
             try:
                 res = _run_async(tool.list_dir(recursive=True))
-                if res and hasattr(res, "files"):
-                    file_list = [f.relative_path for f in res.files]
+                if res and res.status == "success":
+                    file_list = [f["path"] for f in res.data["entries"] if f["type"] == "file"]
                     return {"status": "success", "files": file_list, "workspace": workspace_path}
+                return {"status": "error", "error": getattr(res, "error_message", "Invalid reader response"), "files": []}
             except Exception as e:
                 return {"status": "error", "error": str(e), "files": []}
-        # Fallback / Mock
-        safe_console_print(f"[NodeInsight] Scanning workspace at {workspace_path}")
-        return {"status": "success", "files": ["src/main.py", "tests/test_main.py"]}
+        return {"status": "error", "error": "NodeInsight is unavailable", "files": []}
 
     @staticmethod
-    def read_file(filepath: str, workspace_path: Optional[str] = None) -> Dict[str, Any]:
+    def read_file(filepath: str, workspace_path: Optional[str] = None, **options) -> Dict[str, Any]:
         tool = NodeInsight.get_tool(workspace_path)
         if tool:
             try:
-                res = _run_async(tool.read_file(path=filepath))
+                res = _run_async(tool.read_file(path=filepath, **options))
                 if res:
+                    if res.status != "success":
+                        return {"status": "error", "error": res.error_message}
                     data = getattr(res, "data", None)
                     if isinstance(data, dict) and "content" in data:
                         return {"status": "success", "content": data["content"], "filepath": filepath}
@@ -325,7 +325,7 @@ class NodeInsight:
                         return {"status": "success", "content": res.content, "filepath": filepath}
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        return {"status": "success", "content": f"# Mock content for {filepath}"}
+        return {"status": "error", "error": "NodeInsight unavailable or invalid response"}
 
     @staticmethod
     def call(action: str, **kwargs) -> Dict[str, Any]:
@@ -336,10 +336,12 @@ class NodeInsight:
                 res = _run_async(tool.call(action, **kwargs))
                 if hasattr(res, "model_dump"):
                     return res.model_dump()
-                return res if isinstance(res, dict) else {"status": "success", "data": str(res)}
+                if hasattr(res, "to_dict"):
+                    return res.to_dict()
+                return res if isinstance(res, dict) else {"status": getattr(res, "status", "error"), "data": getattr(res, "data", None), "error": getattr(res, "error_message", "Invalid reader response")}
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        return {"status": "success", "action": action, "kwargs": kwargs}
+        return {"status": "error", "error": "NodeInsight is unavailable", "action": action}
 
 
 # ===========================================================================
@@ -367,20 +369,23 @@ class NodeForge:
                 return res
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        # Fallback / Mock
-        safe_console_print(f"[NodeForge] Writing to {filepath}")
-        return {"status": "success", "filepath": filepath}
+        return {"status": "error", "error": "NodeForge is unavailable", "filepath": filepath}
 
     @staticmethod
     def patch_file(filepath: str, patch_content: str, workspace_path: Optional[str] = None) -> Dict[str, Any]:
         tool = NodeForge.get_tool(workspace_path)
         if tool:
             try:
-                res = _run_async(tool.patch_file(path=filepath, patch_content=patch_content))
+                from NodeForge.tools.unified_patch import apply_unified_patch
+                original = NodeInsight.read_file(filepath, workspace_path)
+                if original.get("status") != "success":
+                    return original
+                patched = apply_unified_patch(original["content"], patch_content, filepath)
+                res = _run_async(tool.write_file(path=filepath, content=patched))
                 return res
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        return {"status": "success", "filepath": filepath, "patched": True}
+        return {"status": "error", "error": "NodeForge is unavailable", "filepath": filepath}
 
     @staticmethod
     def call(action: str, **kwargs) -> Dict[str, Any]:
@@ -391,7 +396,7 @@ class NodeForge:
                 return _run_async(tool.call(action, **kwargs))
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        return {"status": "success", "action": action, "kwargs": kwargs}
+        return {"status": "error", "error": "NodeForge is unavailable", "action": action}
 
 
 # ===========================================================================
@@ -408,47 +413,24 @@ class NodePulse:
         return None
 
     @staticmethod
-    def execute_command(command: str, cwd: Optional[str] = None) -> Dict[str, Any]:
+    def execute_command(command: str, cwd: Optional[str] = None, **options) -> Dict[str, Any]:
         """Local terminal execution, build verification, and test runs with resilient UTF-8 subprocess handling."""
         tool = NodePulse.get_tool(cwd or _ACTIVE_WORKSPACE)
         if tool:
             try:
-                res = _run_async(tool.run_command(command=command, cwd=cwd))
+                res = _run_async(tool.run_command(command=command, cwd=cwd, **options))
                 if isinstance(res, dict):
                     for key in ("stdout", "stderr", "output"):
                         if key in res and isinstance(res[key], bytes):
                             res[key] = res[key].decode("utf-8", errors="replace")
                     return res
-                return {"status": "success", "output": str(res), "exit_code": 0}
-            except Exception:
-                pass
+                return {"status": "error", "output": "Invalid terminal response: " + str(res), "exit_code": -1}
+            except Exception as exc:
+                # An exception does not prove the command never ran. Do not
+                # silently execute a potentially mutating command a second time.
+                return {"status": "error", "error": str(exc), "exit_code": -1}
 
-        # Robust direct subprocess execution forcing UTF-8 and errors='replace'
-        target_cwd = os.path.abspath(cwd or _ACTIVE_WORKSPACE)
-        safe_console_print(f"[NodePulse] Executing: {command}")
-        try:
-            proc = subprocess.run(
-                command,
-                shell=True,
-                cwd=target_cwd,
-                capture_output=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=120
-            )
-            out = proc.stdout or proc.stderr or ""
-            return {
-                "status": "success" if proc.returncode == 0 else "error",
-                "output": out,
-                "stdout": proc.stdout or "",
-                "stderr": proc.stderr or "",
-                "exit_code": proc.returncode,
-                "cwd": target_cwd
-            }
-        except subprocess.TimeoutExpired:
-            return {"status": "error", "error": "Command timed out", "exit_code": 124, "output": "Timeout"}
-        except Exception as e:
-            return {"status": "error", "error": str(e), "exit_code": 1, "output": str(e)}
+        return {"status": "error", "error": "NodePulse is unavailable", "exit_code": -1}
 
     @staticmethod
     def call(action: str, **kwargs) -> Dict[str, Any]:
@@ -458,7 +440,7 @@ class NodePulse:
                 return _run_async(tool.call(action, **kwargs))
             except Exception as e:
                 return {"status": "error", "error": str(e)}
-        return {"status": "success", "action": action, "kwargs": kwargs}
+        return {"status": "error", "error": "NodePulse is unavailable", "action": action}
 
 
 # ===========================================================================
@@ -481,13 +463,20 @@ class NodeLink:
         gw = NodeLink.get_gateway()
         if gw:
             try:
-                handle = gw.connect(target, payload.get("config", {"endpoint": "https://httpbin.org", "adapter": "generic"}))
-                return {"job_id": f"job_{handle.target_id}", "status": handle.status, "handle": handle.to_dict()}
+                if not payload.get("config", {}).get("endpoint"):
+                    return {"status": "error", "error": "An explicit remote endpoint is required"}
+                if not isinstance(payload.get("command"), str) or not payload["command"].strip():
+                    return {"status": "error", "error": "An explicit remote command is required"}
+                async def submit():
+                    gw.connect(target, payload["config"])
+                    return await gw.run_remote(target, payload["command"], payload.get("params"))
+                handle = _run_async(submit())
+                return {"job_id": handle.job_id, "status": handle.status,
+                        "handle": {"target_id": handle.target_id, "job_id": handle.job_id,
+                                   "status": handle.status, "started_at": handle.started_at.isoformat()}}
             except Exception as e:
                 return {"job_id": "job_err", "status": "error", "error": str(e)}
-        # Fallback / Mock
-        safe_console_print(f"[NodeLink] Dispatching to {target}: {payload}")
-        return {"job_id": "job_123", "status": "submitted"}
+        return {"status": "error", "error": "NodeLink is unavailable"}
 
 
 # ===========================================================================

@@ -1,0 +1,47 @@
+
+import unittest
+from app_logic import summarize
+
+class TestSummarize(unittest.TestCase):
+    def test_normal(self):
+        result = summarize([1, 2, 3])
+        self.assertEqual(result, {"count": 3, "total": 6, "mean": 2.0, "minimum": 1, "maximum": 3})
+
+    def test_negative(self):
+        result = summarize([-1, -2, -3])
+        self.assertEqual(result, {"count": 3, "total": -6, "mean": -2.0, "minimum": -3, "maximum": -1})
+
+    def test_singleton(self):
+        result = summarize([42])
+        self.assertEqual(result, {"count": 1, "total": 42, "mean": 42.0, "minimum": 42, "maximum": 42})
+
+    def test_tuple(self):
+        result = summarize((1, 2, 3))
+        self.assertEqual(result, {"count": 3, "total": 6, "mean": 2.0, "minimum": 1, "maximum": 3})
+
+    def test_large_integer(self):
+        result = summarize([10**10, 10**11])
+        self.assertEqual(result, {"count": 2, "total": 1000000000010, "mean": 500000000005.0, "minimum": 1000000000000, "maximum": 1000000000010})
+
+    def test_empty(self):
+        with self.assertRaises(ValueError):
+            summarize([])
+
+    def test_boolean(self):
+        with self.assertRaises(TypeError):
+            summarize([True, False])
+
+    def test_float(self):
+        with self.assertRaises(TypeError):
+            summarize([1.5, 2.5])
+
+    def test_string(self):
+        with self.assertRaises(TypeError):
+            summarize(["a", "b"])
+
+    def test_invalid_container(self):
+        with self.assertRaises(TypeError):
+            summarize({"a": 1, "b": 2})
+
+if __name__ == "__main__":
+    unittest.main()

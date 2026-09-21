@@ -179,9 +179,9 @@ class StateManager:
             self._current_task = None
             log.info("Task completed", task_id=task.id, summary=summary[:80])
 
-    async def fail_task(self, task: Task, error: str) -> None:
+    async def fail_task(self, task: Task, error: str, status: str = "FAILED") -> None:
         async with self._lock:
-            task.status = "FAILED"
+            task.status = status
             task.completed_at = datetime.now(timezone.utc).isoformat()
             task.error_message = error
             await self._update_task(task)

@@ -38,7 +38,7 @@ class FileReader:
         Raises ValueError if the resolved path escapes the workspace sandbox.
         """
         resolved = (self._root / path).resolve()
-        if not str(resolved).startswith(str(self._root)):
+        if not resolved.is_relative_to(self._root):
             raise ValueError(
                 f"Path traversal detected: '{path}' resolves outside workspace root "
                 f"'{self._root}'"

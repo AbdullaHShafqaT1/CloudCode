@@ -1172,12 +1172,13 @@ class BridgeAdapter:
                 sess = initialize_session(
                     project_id=kwargs.get("project_id", "proj_default"),
                     workspace_path=ws,
-                    domain_type=kwargs.get("domain_type", "SOFTWARE_ENGINEERING"),
+                    domain_type=kwargs.get("domain_type", "SOFTWARE_DEV"),
                     env_config=kwargs.get("env_config", {}),
+                    max_rounds=kwargs.get("max_rounds", 30),
                 )
                 data = sess.model_dump()
             else:
-                data = {"status": "success", "action": action, "kwargs": kwargs}
+                raise ValueError(f"Unsupported NodeCore action: {action}")
 
             ms = round((_time.monotonic() - t0) * 1000, 1)
             self._emit(f"CORE [nodecore] OK — action={action}")
@@ -1196,6 +1197,5 @@ class BridgeAdapter:
                 traceback=_tb.format_exc(),
                 latency_ms=ms,
             )
-
 
 

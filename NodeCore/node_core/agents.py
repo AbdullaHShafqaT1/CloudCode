@@ -35,8 +35,10 @@ def extract_code_blocks_with_metadata(
     current_header = ""
     current_code_lines: List[str] = []
     block_preceding_text = ""
+    current_fence = "```"
+    document_nested_fences = []
 
-    fence_pattern = re.compile(r"^\s*```(?P<lang>[a-zA-Z0-9_\-]*)(?:[ \t]+(?P<header>[^\r\n]+))?")
+    fence_pattern = re.compile(r"^\s*(?P<fence>`{3,})(?P<lang>[a-zA-Z0-9_\-]*)(?:[ \t]+(?P<header>[^\r\n]+))?\s*$")
 
     def process_collected_block(lang: str, header: str, code_lines: List[str], prec_text: str, block_idx: int) -> Dict[str, Any]:
         code = "\n".join(code_lines)
@@ -63,36 +65,28 @@ def extract_code_blocks_with_metadata(
             elif re.search(r'^(?:#|//|<!--|;)\s*([a-zA-Z0-9_\-]+\.[a-zA-Z0-9]{1,5})\s*(?:-->)?$', first_line, re.IGNORECASE):
                 target_filename = re.search(r'^(?:#|//|<!--|;)\s*([a-zA-Z0-9_\-]+\.[a-zA-Z0-9]{1,5})\s*(?:-->)?$', first_line, re.IGNORECASE).group(1).strip()
 
-        # Check subsequent first 4 lines in case shebang/docstring preceded
-        if not target_filename and len(code_split) > 1:
-            for line in code_split[1:5]:
-                sub_match = re.search(
-                    r'^(?:#|//|<!--|;)?\s*(?:filename|filepath|file)\s*[:=]\s*([a-zA-Z0-9_\-\.\/\\]+\.[a-zA-Z0-9]+)',
-                    line.strip(),
-                    re.IGNORECASE
-                )
-                if sub_match:
-                    target_filename = sub_match.group(1).strip()
-                    break
-
         # 3. Detect filename from preceding markdown lines
         if not target_filename and prec_text:
             last_lines = prec_text.splitlines()[-4:]
             tail = "\n".join(last_lines)
-            md_match = re.search(
-                r"""(?:(?:file(?:name)?|save as|in|here is|here's)\s*[:=]?\s*[`"']?|###?\s*(?:(?:step\s*)?[0-9]+[\.\):]\s*)?[`"']?|\*\*(?:file:)?\s*(?:(?:step\s*)?[0-9]+[\.\):]\s*)?[`"']?)([a-zA-Z0-9_\-\.\/\\]+\.[a-zA-Z0-9]{1,5})[`"']?""",
+            md_matches = list(re.finditer(
+                r"""(?:(?:file(?:name)?|save as|here is|here's)\s*[:=]?\s*[`"']?|###?\s*(?:(?:step\s*)?[0-9]+[\.\):]\s*)?[`"']?|\*\*(?:file:)?\s*(?:(?:step\s*)?[0-9]+[\.\):]\s*)?[`"']?)([a-zA-Z0-9_\-\.\/\\]+\.[a-zA-Z0-9]{1,5})[`"']?""",
                 tail,
                 re.IGNORECASE
-            )
+            ))
+            # The nearest heading names this block; earlier prose can mention
+            # imports or other files and must not redirect the write.
+            md_match = md_matches[-1] if md_matches else None
             if md_match:
                 cand = md_match.group(1).strip()
                 if not cand.lower().endswith((".png", ".jpg", ".gif", ".exe")):
                     target_filename = cand
 
+        explicit_filename = target_filename is not None
         # 4. Fallback inference based on content signatures
         if not target_filename:
             code_lower = code.lower()
-            if "class chessboard" in code_lower or "class chessgame" in code_lower or "is_check" in code_lower:
+            if "class chessboard" in code_lower or "class chessgame" in code_lower:
                 target_filename = "chess_logic.py"
             elif "class ludoboard" in code_lower or "class ludogame" in code_lower:
                 target_filename = "ludo_logic.py"
@@ -113,7 +107,7 @@ def extract_code_blocks_with_metadata(
 
         # 5. Structured workspace fallback: NEVER drop output
         if not target_filename:
-            if default_filename:
+            if default_filename and (lang in {"python", "py"} and default_filename.lower().endswith(".py") or lang in {"text", "txt"} and default_filename.lower().endswith(".txt")):
                 target_filename = default_filename
             elif lang in ["python", "py"]:
                 target_filename = f"workspace_artifact_{block_idx + 1}.py"
@@ -124,19 +118,24 @@ def extract_code_blocks_with_metadata(
             else:
                 target_filename = f"artifact_{block_idx + 1}.txt"
 
-        # Clean code: remove leading filename directive line if present
+        # Strip only an actual first-line file directive. Ordinary comments and
+        # TERMINATE inside string literals are part of the user's program.
         clean_code = code
-        if target_filename:
-            clean_code = re.sub(r'^(?:#|//|<!--|;)[^\r\n]*(?:filename|filepath|file|\.[a-zA-Z0-9]{1,5})[^\r\n]*\r?\n', '', clean_code, count=1, flags=re.IGNORECASE)
-
-        # Strip accidental trailing TERMINATE inside code block
-        clean_code = re.sub(r'^\s*TERMINATE\s*$', '', clean_code, flags=re.MULTILINE).strip()
+        routing_error = None
+        if code_split:
+            directive = re.fullmatch(r"(?:#|//|<!--|;)\s*(?:(?:filename|filepath|file)\s*[:=]\s*)?([a-zA-Z0-9_\-./\\]+\.[a-zA-Z0-9]+)\s*(?:-->)?", code_split[0].strip(), re.IGNORECASE)
+            if directive and directive.group(1) == target_filename:
+                clean_code = "\n".join(code_split[1:])
+            elif directive:
+                routing_error = "Conflicting filenames in fence header and file directive; send one explicit target"
 
         return {
             "lang": lang,
             "filename": target_filename,
             "code": clean_code,
-            "raw_code": code
+            "raw_code": code,
+            "inferred_filename": not explicit_filename,
+            "routing_error": routing_error,
         }
 
     while i < n:
@@ -146,8 +145,24 @@ def extract_code_blocks_with_metadata(
         if fence_match:
             lang = (fence_match.group("lang") or "").strip().lower()
             header = (fence_match.group("header") or "").strip()
+            fence = fence_match.group("fence")
 
             if in_block:
+                # Fences inside a document are document bytes, never commands.
+                # This also handles a model using equal-width nested fences.
+                is_document = current_lang in {"markdown", "md", "text", "txt"}
+                if len(fence) < len(current_fence):
+                    current_code_lines.append(line)
+                    i += 1
+                    continue
+                if is_document and (lang or header or document_nested_fences):
+                    if lang or header:
+                        document_nested_fences.append(fence)
+                    else:
+                        document_nested_fences.pop()
+                    current_code_lines.append(line)
+                    i += 1
+                    continue
                 # If closing fence (no lang, no header)
                 if not lang and not header:
                     results.append(process_collected_block(current_lang, current_header, current_code_lines, block_preceding_text, len(results)))
@@ -155,16 +170,21 @@ def extract_code_blocks_with_metadata(
                     current_code_lines = []
                     current_lang = ""
                     current_header = ""
+                    document_nested_fences = []
                     block_preceding_text = ""
                     preceding_lines = []
                     i += 1
                     continue
                 else:
                     # New code fence started without closing previous (truncated block)
-                    results.append(process_collected_block(current_lang, current_header, current_code_lines, block_preceding_text, len(results)))
+                    unfinished = process_collected_block(current_lang, current_header, current_code_lines, block_preceding_text, len(results))
+                    unfinished["complete"] = False
+                    results.append(unfinished)
                     in_block = True
                     current_lang = lang
                     current_header = header
+                    current_fence = fence
+                    document_nested_fences = []
                     current_code_lines = []
                     block_preceding_text = "\n".join(preceding_lines[-4:])
                     preceding_lines = []
@@ -175,6 +195,8 @@ def extract_code_blocks_with_metadata(
                 in_block = True
                 current_lang = lang
                 current_header = header
+                current_fence = fence
+                document_nested_fences = []
                 current_code_lines = []
                 block_preceding_text = "\n".join(preceding_lines[-4:])
                 preceding_lines = []
@@ -189,7 +211,9 @@ def extract_code_blocks_with_metadata(
 
     # Gracefully handle truncated code block at EOF (missing closing ```)
     if in_block and current_code_lines:
-        results.append(process_collected_block(current_lang, current_header, current_code_lines, block_preceding_text, len(results)))
+        unfinished = process_collected_block(current_lang, current_header, current_code_lines, block_preceding_text, len(results))
+        unfinished["complete"] = False
+        results.append(unfinished)
 
     # Fallback for LLM responses that output code directly with '# filename: <path>' without opening markdown fences
     if not results:
@@ -204,7 +228,7 @@ def extract_code_blocks_with_metadata(
                 fname = fn_match.group(1).strip()
                 clean_sec = re.sub(r'```[a-zA-Z0-9_\-]*\s*$', '', sec_clean).strip()
                 clean_sec = re.sub(r'^(?:#|//|<!--|;)[^\r\n]*(?:filename|filepath|file|\.[a-zA-Z0-9]{1,5})[^\r\n]*\r?\n', '', clean_sec, count=1, flags=re.IGNORECASE)
-                clean_sec = re.sub(r'^\s*TERMINATE\s*$', '', clean_sec, flags=re.MULTILINE).strip()
+                # Preserve literal code, including completion words in strings.
                 results.append({
                     "lang": "python" if fname.endswith(".py") else "text",
                     "filename": fname,
@@ -378,10 +402,9 @@ def prepare_phased_task_prompt(task_prompt: str) -> str:
     preventing the LLM from attempting to generate all project files at once
     and hitting remote token caps.
     """
-    p_lower = task_prompt.lower()
-    if "hello.py" in p_lower or "sanity check" in p_lower:
-        return task_prompt
-
+    if "hello.py" in task_prompt.lower() and "sanity check" in task_prompt.lower():
+        return ("TASK OBJECTIVE:\n" + task_prompt + "\nImplement and run hello.py. "
+                "Only the orchestrator can declare completion after checking the file and actual output.")
     profile = detect_project_profile(task_prompt, [])
     logic_file = profile["logic"]
 
@@ -399,13 +422,35 @@ MANDATE FOR THIS TURN:
    - DO NOT generate GUI, main entry point, test suite, or documentation in this turn.
    - FORBIDDEN STUBS: Never write '# TODO', '# Implement later', or empty stubs. All logic must be fully implemented.
 4. Output 100% complete source code in a single Python code block with '# filename: {logic_file}' on line 1.
+5. PHASE_COMPLETE finishes only this phase; ITERATION_COMPLETE finishes only an iteration.
+   TASK_COMPLETE (or legacy TERMINATE) requests final verification. Only the orchestrator can declare completion.
 ================================================================================
 """
 
 
+def bounded_model_messages(messages, max_history_chars=36000):
+    """Retain the original specification and latest feedback, not old failed code.
+
+    Only the inference view changes; AutoGen's complete execution/evidence
+    history stays intact. The mandatory first/latest messages are never clipped.
+    This is a character budget for optional history, not a tokenizer claim.
+    """
+    if not messages or len(messages) < 3:
+        return messages
+    used = len(str(messages[0].get('content', ''))) + len(str(messages[-1].get('content', '')))
+    recent = []
+    for message in reversed(messages[1:-1]):
+        size = len(str(message.get('content', '')))
+        if used + size > max_history_chars or len(recent) >= 3:
+            break
+        recent.append(message)
+        used += size
+    return [messages[0], *reversed(recent), messages[-1]]
+
+
 def create_coder_agent(llm_config: Dict[str, Any]) -> ConversableAgent:
     """Streamlined autonomous coder agent tailored for Qwen-Coder and dual-agent runner."""
-    return ConversableAgent(
+    agent = ConversableAgent(
         name="CoderAgent",
         system_message="""You are the Autonomous Principal Software Engineer (CoderAgent).
 Your objective is to build complete, production-grade, fully functional software projects without missing any required files or features.
@@ -413,10 +458,11 @@ Your objective is to build complete, production-grade, fully functional software
 STRICT OPERATIONAL RULES & NEGATIVE CONSTRAINTS:
 1. ZERO CONVERSATIONAL ADVICE:
    - You are an automated non-interactive engine. Never output conversational advice, pleasantries, step-by-step human instructions (e.g., 'Open file X and indent line Y'), or explanations when an error occurs.
-   - Do NOT say 'Here is the code...' or 'I have implemented...'. Output ONLY executable code blocks.
+   - Do NOT say 'Here is the code...' or 'I have implemented...'. Output file, shell, or read code blocks.
+   - Use a ```read block containing relative file paths to inspect existing code before changing it.
 
 2. COMPLETE RECOVERY ARTIFACTS:
-   - When runtime/syntax errors or failed tests are returned by UserProxyRunner, your ONLY valid output is the 100% complete, corrected file containing `# filename: <filepath>` on line 1.
+   - When errors are returned, inspect existing files with read blocks and inspect installed dependency APIs with short shell commands as needed. Then return the complete corrected file containing `# filename: <filepath>` on line 1.
    - Never output diffs, snippets, or partial patches. Always provide the entire, fully implemented file.
 
 3. FORBIDDEN STUBS & PLACEHOLDERS:
@@ -430,382 +476,55 @@ STRICT OPERATIONAL RULES & NEGATIVE CONSTRAINTS:
 
 5. TESTS & HEADLESS EXECUTION:
    - Write automated unit tests using the standard `unittest` library.
+   - Keep files concise. Use small representative fixtures and loops/subTest for related cases instead of hundreds of repetitive assertions. Preserve every requested feature.
+   - Use required installed libraries and their actual APIs; do not replace task-required libraries with hand-written implementations.
    - DO NOT run GUI mainloops in test files or bash blocks, as GUI event loops block the non-interactive runner. Test game logic headlessly.
 
 6. TERMINATION:
-   - Output TERMINATE on its own line ONLY after all requested phases are completed, all files are saved, and the automated test suite has passed with exit code 0.
+   - PHASE_COMPLETE and ITERATION_COMPLETE are local progress signals.
+   - TASK_COMPLETE or legacy TERMINATE requests verification, never ends an incomplete task.
+   - Follow the runner's remaining requirements until it confirms completion.
 """,
         llm_config=llm_config,
     )
+    agent.register_hook("process_all_messages_before_reply", bounded_model_messages)
+    return agent
 
 
 def create_user_proxy_runner(
     name: str = "UserProxyRunner",
-    workspace_path: Optional[str] = None
+    workspace_path: Optional[str] = None,
+    max_rounds: int = 30,
+    task_prompt: str = "",
+    acceptance: Optional[Dict[str, Any]] = None,
+    should_stop=None,
 ) -> UserProxyAgent:
-    """Creates a UserProxyAgent with robust Phased Pipeline Execution and Markdown code block interception."""
-    ws = os.path.abspath(workspace_path or ".")
-    os.makedirs(ws, exist_ok=True)
-
+    """Keep AutoGen transport while delegating phase evidence to TaskWorkflow."""
+    from node_core.workflow import TaskWorkflow
+    workflow = TaskWorkflow(workspace_path or ".", task_prompt,
+                            detect_project_profile(task_prompt), max_rounds,
+                            acceptance=acceptance, should_stop=should_stop)
     user_proxy = UserProxyAgent(
-        name=name,
-        human_input_mode="NEVER",
-        max_consecutive_auto_reply=30,
-        is_termination_msg=None,  # Handled cleanly inside custom_execution_reply
-        code_execution_config=False,
+        name=name, human_input_mode="NEVER", max_consecutive_auto_reply=max_rounds,
+        is_termination_msg=lambda message: False, code_execution_config=False,
     )
-
-    # Phased Pipeline State
-    phase_state = {
-        "current_phase": 1,  # 1: Logic, 2: Contracts, 3: GUI, 4: Tests/Main, 5: Docs, 6: Done
-        "contract": "",
-        "profile": None,
-        "is_simple_task": False,
-        "logic_verified": False,
-        "gui_verified": False,
-        "tests_passed": False
-    }
+    user_proxy.workflow = workflow
 
     def custom_execution_reply(recipient, messages=None, sender=None, config=None):
-        if messages is None:
-            messages = recipient._oai_messages[sender]
-        last_message = messages[-1]
-        content = last_message.get("content", "")
-        if not content:
-            return True, "No content received."
-
-        # Scan active workspace inventory
-        try:
-            ws_files = sorted([f for f in os.listdir(ws) if os.path.isfile(os.path.join(ws, f))])
-        except Exception:
-            ws_files = []
-
-        # Detect initial prompt & profile if not already set
-        if phase_state["profile"] is None:
-            initial_prompt = messages[0].get("content", "") if messages else ""
-            if "hello.py" in initial_prompt.lower() or "sanity check" in initial_prompt.lower():
-                phase_state["is_simple_task"] = True
-            phase_state["profile"] = detect_project_profile(initial_prompt, ws_files)
-
-        profile = phase_state["profile"]
-        expected_logic = profile["logic"]
-        expected_gui = profile["gui"]
-        expected_tests = profile["tests"]
-        expected_main = profile["main"]
-        expected_guide = profile["guide"]
-
-        # Default fallback filename based on active phase
-        cur_p = phase_state["current_phase"]
-        if cur_p == 1:
-            phase_default = expected_logic
-        elif cur_p == 3:
-            phase_default = expected_gui
-        elif cur_p == 4:
-            phase_default = expected_tests
-        elif cur_p == 5:
-            phase_default = expected_guide
-        else:
-            phase_default = None
-
-        parsed_blocks = extract_code_blocks_with_metadata(content, default_filename=phase_default)
-
-        # Strict termination detection: on its own line or at very end of message
-        has_terminate = bool(re.search(r'(?:^\s*TERMINATE\s*$|\bTERMINATE\s*$)', content, re.MULTILINE))
-
-        output_parts = []
-        syntax_errors = []
-        saved_files = []
-
-        for blk in parsed_blocks:
-            lang_lower = blk["lang"]
-            target_file = blk["filename"]
-            code = blk["code"]
-
-            # Case A: File writing block (Python, Text, JSON, etc.)
-            if target_file and lang_lower not in ["bash", "sh", "cmd", "powershell"]:
-                rel_path = target_file.strip().replace("\\", "/")
-                res = NodeForge.write_file(rel_path, code, workspace_path=ws)
-                bytes_written = res.get("bytes_written", len(code)) if isinstance(res, dict) else len(code)
-                msg = f"[NodeForge] Successfully created file '{rel_path}' ({bytes_written} bytes)"
-
-                # Syntax check for Python files
-                if rel_path.endswith(".py"):
-                    try:
-                        compile(code, rel_path, 'exec')
-                        msg += " [Syntax: OK]"
-                        saved_files.append(rel_path)
-                    except SyntaxError as se:
-                        err_msg = f" [!] SyntaxError on line {se.lineno}: {se.msg}"
-                        msg += err_msg
-                        syntax_errors.append((rel_path, se.lineno, se.msg))
-
-                output_parts.append(msg)
-                safe_console_print(f"[+] {msg}")
-                NodeLog.emit("FILE_CREATED", {"file": rel_path, "bytes": bytes_written, "source": "NodeForge"})
-
-            # Case B: Shell / Bash command execution
-            elif lang_lower in ["bash", "sh", "shell", "cmd", "powershell"]:
-                lines = []
-                for line in code.splitlines():
-                    stripped = line.strip()
-                    if stripped.startswith("#!") or stripped.upper() == "TERMINATE":
-                        continue
-                    if stripped.startswith("#") and not stripped.startswith("# filename"):
-                        continue
-                    if stripped:
-                        lines.append(stripped)
-
-                cmd = " && ".join(lines) if lines else ""
-                if cmd:
-                    res = NodePulse.execute_command(cmd, cwd=ws)
-                    exit_code = res.get("exit_code", 0) if isinstance(res, dict) else 0
-                    out = res.get("output") or res.get("stdout") or res.get("stderr") or "" if isinstance(res, dict) else str(res)
-                    msg = f"[NodePulse] Executed `{cmd}` (exit code {exit_code}):\n{out}"
-                    output_parts.append(msg)
-                    safe_console_print(f"[+] {msg}")
-                    NodeLog.emit("COMMAND_RUN", {"command": cmd, "exit_code": exit_code, "output": out[:200], "source": "NodePulse"})
-
-        combined = "\n\n".join(output_parts) if output_parts else "No executable code blocks processed."
-
-        # Re-scan workspace files after writes
-        try:
-            ws_files = sorted([f for f in os.listdir(ws) if os.path.isfile(os.path.join(ws, f))])
-        except Exception:
-            ws_files = []
-
-        # Simple Task Shortcut (e.g. hello.py)
-        if phase_state["is_simple_task"]:
-            if has_terminate or any("hello.py" in f for f in ws_files):
-                NodeLog.emit("TASK_COMPLETED", {"message": "Simple task verified.", "source": "UserProxyRunner"})
-                return True, None
-            return True, f"Execution Results:\n{combined}\n\nWorkspace Files: {ws_files}\nPlease output TERMINATE to conclude."
-
-        # Handle Syntax Errors immediately: Demand 100% complete recovery artifact
-        if syntax_errors:
-            file_err, line_err, desc_err = syntax_errors[0]
-            return True, (
-                f"Execution Results:\n{combined}\n\n"
-                f"[!] CRITICAL SYNTAX ERROR in '{file_err}' on line {line_err}: {desc_err}\n"
-                f"STRICT RECOVERY DIRECTIVE:\n"
-                f"Output the 100% complete, corrected '{file_err}' in a single Python code block with '# filename: {file_err}' on line 1.\n"
-                f"DO NOT output conversational advice or partial diffs."
-            )
-
-        # =============================================================
-        # Phased Pipeline State Machine Transitions
-        # =============================================================
-
-        # -------------------------------------------------------------
-        # Phase 1: Core Logic Verification & Phase 2: Contracts Extraction
-        # -------------------------------------------------------------
-        logic_exists = any(f == expected_logic or f.endswith("_logic.py") for f in ws_files)
-        if phase_state["current_phase"] == 1:
-            if logic_exists:
-                actual_logic = [f for f in ws_files if f == expected_logic or f.endswith("_logic.py")][0]
-                logic_full_path = os.path.join(ws, actual_logic)
-                contract_str = extract_api_contracts(logic_full_path, is_code=False, source_name=actual_logic)
-                phase_state["contract"] = contract_str
-                phase_state["logic_verified"] = True
-                phase_state["current_phase"] = 3  # Advance to Phase 3 (Phase 2 is Contracts Extraction)
-
-                NodeLog.emit("PHASE_TRANSITION", {
-                    "from_phase": 1,
-                    "to_phase": 3,
-                    "event": "CONTRACT_EXTRACTED",
-                    "source_file": actual_logic,
-                    "contract_preview": contract_str[:250]
-                })
-
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[+] Phase 1 (Interface & Logic) VERIFIED: '{actual_logic}' [Syntax: OK]\n\n"
-                    f"{contract_str}\n\n"
-                    f">>> PHASE 3 DIRECTIVE (GUI / Application Layer):\n"
-                    f"Generate ONLY the graphical user interface file ('{expected_gui}').\n"
-                    f"CRITICAL ARCHITECTURAL CONSTRAINTS:\n"
-                    f"1. You MUST strictly adhere to the Phase 2 API Contract extracted from '{actual_logic}' above.\n"
-                    f"2. Do NOT invent method names or change parameter signatures that exist in '{actual_logic}'.\n"
-                    f"3. Output the complete source code in a ```python code block with '# filename: {expected_gui}' on line 1.\n"
-                    f"4. DO NOT generate main.py, tests, or guide files in this turn."
-                )
-            else:
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[!] Phase 1 Incomplete: Core logic engine '{expected_logic}' is missing.\n"
-                    f"Please generate '{expected_logic}' now in a complete ```python code block with '# filename: {expected_logic}' on line 1."
-                )
-
-        # -------------------------------------------------------------
-        # Phase 3: GUI / Application Layer Verification
-        # -------------------------------------------------------------
-        gui_exists = any(f == expected_gui or f.endswith("_gui.py") for f in ws_files)
-        if phase_state["current_phase"] == 3:
-            if gui_exists:
-                actual_gui = [f for f in ws_files if f == expected_gui or f.endswith("_gui.py")][0]
-                phase_state["gui_verified"] = True
-                phase_state["current_phase"] = 4  # Advance to Phase 4 (Verification & Scaffolding)
-
-                NodeLog.emit("PHASE_TRANSITION", {
-                    "from_phase": 3,
-                    "to_phase": 4,
-                    "event": "GUI_VERIFIED",
-                    "source_file": actual_gui
-                })
-
-                contract_reminder = phase_state["contract"] or ""
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[+] Phase 3 (GUI Layer) VERIFIED: '{actual_gui}' [Syntax: OK]\n\n"
-                    f">>> PHASE 4 DIRECTIVE (Verification & Scaffolding):\n"
-                    f"Generate:\n"
-                    f"1. Automated headless test suite ('{expected_tests}') using standard unittest verifying the logic engine against the contract:\n"
-                    f"{contract_reminder}\n"
-                    f"2. Application entry point ('main.py') initializing the logic engine and launching '{actual_gui}'.\n\n"
-                    f"CRITICAL REQUIREMENTS:\n"
-                    f"- Output each file in its own code block with '# filename: <filename>' on line 1.\n"
-                    f"- Write tests headlessly. Do NOT invoke GUI mainloop inside '{expected_tests}'.\n"
-                    f"- Provide 100% complete source code without stubs or placeholders."
-                )
-            else:
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[!] Phase 3 Incomplete: GUI file '{expected_gui}' is missing.\n"
-                    f"Please generate '{expected_gui}' strictly conforming to the Phase 2 contract, with '# filename: {expected_gui}' on line 1."
-                )
-
-        # -------------------------------------------------------------
-        # Phase 4: Test Suite & Scaffolding Automatic Verification
-        # -------------------------------------------------------------
-        tests_exist = any((f.startswith("test") or f.endswith("_test.py")) and f.endswith(".py") for f in ws_files)
-        main_exists = "main.py" in ws_files
-        if phase_state["current_phase"] == 4:
-            if not tests_exist or not main_exists:
-                missing_scaffolding = []
-                if not tests_exist:
-                    missing_scaffolding.append(f"Unit Tests ('{expected_tests}')")
-                if not main_exists:
-                    missing_scaffolding.append("Application Entrypoint ('main.py')")
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[!] Phase 4 Incomplete: Still missing {', '.join(missing_scaffolding)}.\n"
-                    f"Please output the missing files with '# filename: <filename>' on line 1."
-                )
-
-            # Automated Test Execution via NodePulse
-            test_candidates = [f for f in ws_files if (f.startswith("test") or f.endswith("_test.py")) and f.endswith(".py")]
-            tfile = test_candidates[0]
-            safe_console_print(f"[*] Running automated test suite: python {tfile}")
-            res = NodePulse.execute_command(f"python {tfile}", cwd=ws)
-            ecode = res.get("exit_code", 0) if isinstance(res, dict) else 0
-            tout = res.get("output") or res.get("stdout") or res.get("stderr") or "" if isinstance(res, dict) else str(res)
-
-            if ecode != 0:
-                # Diagnostic check for exact imports and tracebacks
-                diag_info = ""
-                actual_logic = [f for f in ws_files if f == expected_logic or f.endswith("_logic.py")]
-                logic_name = actual_logic[0] if actual_logic else expected_logic
-                try:
-                    if actual_logic:
-                        mod_name = actual_logic[0][:-3]
-                        dres = NodePulse.execute_command(
-                            f"python -c \"import {mod_name}; print('Logic module exports:', [a for a in dir({mod_name}) if not a.startswith('_')])\"",
-                            cwd=ws
-                        )
-                        if dres.get("output"):
-                            diag_info += f"\n- {dres.get('output').strip()}"
-
-                    # AST-based import compatibility check between test suite and logic module
-                    try:
-                        test_code = open(os.path.join(ws, tfile), "r", encoding="utf-8", errors="replace").read()
-                        tree = ast.parse(test_code)
-                        imported_names = []
-                        for node in ast.walk(tree):
-                            if isinstance(node, ast.ImportFrom) and node.module == mod_name:
-                                imported_names.extend([alias.name for alias in node.names])
-                        if imported_names:
-                            check_cmd = f"python -c \"import {mod_name}; missing = [n for n in {imported_names!r} if not hasattr({mod_name}, n)]; print('Missing from {mod_name}:', missing)\""
-                            cres = NodePulse.execute_command(check_cmd, cwd=ws)
-                            if cres.get("output"):
-                                diag_info += f"\n- Import Check: `{tfile}` imports {imported_names} from `{mod_name}`. {cres.get('output').strip()}"
-                    except Exception:
-                        pass
-
-                    # Run direct import to capture exact unsuppressed traceback
-                    tres = NodePulse.execute_command(f"python -c \"import {tfile[:-3]}\"", cwd=ws)
-                    if tres.get("exit_code") != 0 and tres.get("output"):
-                        diag_info += f"\n- Raw Test File Error Output:\n{tres.get('output').strip()[:400]}"
-                except Exception:
-                    pass
-
-                # Tests failed: Reject termination and demand complete recovery artifact
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[!] [Automated Verification] Test suite `{tfile}` FAILED (exit code {ecode}):\n"
-                    f"{tout[:600]}\n"
-                    f"{diag_info}\n\n"
-                    f"CRITICAL RECOVERY DIRECTIVE:\n"
-                    f"Inspect the failure details above. Ensure that all types, classes, or functions imported by `{tfile}` (and `{expected_gui}`) "
-                    f"are explicitly defined and exported in `{logic_name}`, or update `{tfile}` so all imports match `{logic_name}`.\n"
-                    f"Generate the 100% complete, corrected file with '# filename: <filename>' on line 1 to resolve the issue.\n"
-                    f"Do NOT output conversational advice or partial snippets."
-                )
-
-            # Tests passed!
-            phase_state["tests_passed"] = True
-            phase_state["current_phase"] = 5  # Advance to Phase 5 (Documentation & Completion)
-            NodeLog.emit("PHASE_TRANSITION", {
-                "from_phase": 4,
-                "to_phase": 5,
-                "event": "TESTS_PASSED",
-                "test_file": tfile
-            })
-
-            return True, (
-                f"Execution Results:\n{combined}\n\n"
-                f"[+] Phase 4 (Automated Verification) PASSED: `{tfile}` exit code 0!\n"
-                f"{tout[:300]}\n\n"
-                f">>> PHASE 5 DIRECTIVE (Documentation & Completion):\n"
-                f"Generate '{expected_guide}' detailing launch commands (`python main.py`), controls, and rules.\n"
-                f"Output the guide in a code block with '# filename: {expected_guide}' on line 1.\n"
-                f"On a separate line immediately after the code block, output TERMINATE to conclude the project."
-            )
-
-        # -------------------------------------------------------------
-        # Phase 5: Documentation & Completion
-        # -------------------------------------------------------------
-        guide_exists = any("guide" in f.lower() or "readme" in f.lower() for f in ws_files)
-        if phase_state["current_phase"] == 5:
-            if not guide_exists:
-                return True, (
-                    f"Execution Results:\n{combined}\n\n"
-                    f"[!] Phase 5 Incomplete: User guide '{expected_guide}' is missing.\n"
-                    f"Please generate '{expected_guide}' with launch instructions, then output TERMINATE."
-                )
-
-            if has_terminate:
-                phase_state["current_phase"] = 6
-                NodeLog.emit("TASK_COMPLETED", {
-                    "message": "All 5 phases completed and verified successfully.",
-                    "workspace_files": ws_files,
-                    "source": "UserProxyRunner"
-                })
-                return True, None
-
-            return True, (
-                f"Execution Results:\n{combined}\n\n"
-                f"All 5 phases are complete and verified!\n"
-                f"Current Workspace Files ({len(ws_files)}): {ws_files}\n"
-                f"Please output TERMINATE on its own line to finish."
-            )
-
-        # Default fallback
-        if has_terminate:
+        messages = messages if messages is not None else recipient._oai_messages[sender]
+        # AutoGen's bounded loop can ask for another proxy reply even when the
+        # coder returned None. Never execute our own preceding prompt as code.
+        if not messages or messages[-1].get("role") != "user":
+            workflow.reason = "Conversation ended before verification completed"
             return True, None
-        return True, f"Execution Results:\n{combined}\n\nWorkspace Files: {ws_files}"
+        if not workflow.task and messages:
+            workflow.task = messages[0].get("content", "") or ""
+            workflow.profile = detect_project_profile(workflow.task)
+        content = messages[-1].get("content", "") if messages else ""
+        return True, workflow.consume_messages(messages)
 
     user_proxy.register_reply([ConversableAgent, None], custom_execution_reply, position=0)
     return user_proxy
-
 
 def create_user_proxy_agent(
     name: str = "UserProxyRunner",

@@ -467,7 +467,7 @@ class TestClosedLoopHybridCycle:
         # -------------------------------------------------------------------
         log_step("PULSE", "Step 2: Running local unit tests via LegacyBridge.terminal_call (expecting failure)")
         pulse_precheck: BridgeResult = bridge_adapter.terminal_call(
-            command=f"{sys.executable} -m pytest test_model_runner.py -v",
+            command=__import__("subprocess").list2cmdline([sys.executable, "-m", "pytest", "test_model_runner.py", "-v"]),
             cwd=str(hybrid_sandbox),
             timeout=30,
         )
@@ -505,7 +505,7 @@ class TestClosedLoopHybridCycle:
         # -------------------------------------------------------------------
         log_step("PULSE", "Step 4: Re-running local unit tests via LegacyBridge.terminal_call (expecting success)")
         pulse_recheck: BridgeResult = bridge_adapter.terminal_call(
-            command=f"{sys.executable} -m pytest test_model_runner.py -v",
+            command=__import__("subprocess").list2cmdline([sys.executable, "-m", "pytest", "test_model_runner.py", "-v"]),
             cwd=str(hybrid_sandbox),
             timeout=30,
         )
@@ -714,7 +714,7 @@ class TestToolFailoverAndBoundaryResilience:
         # Step 3e: Verify NodePulse continues to work immediately
         log_step("PULSE", "Verifying NodePulse operational after remote failure")
         pulse_res: BridgeResult = bridge_adapter.terminal_call(
-            command=f"{sys.executable} -c \"print('NodePulse Local Sanity OK')\"",
+            command=__import__("subprocess").list2cmdline([sys.executable, "-c", "print('NodePulse Local Sanity OK')"]),
             cwd=str(hybrid_sandbox),
         )
         assert pulse_res.ok, "NodePulse must remain operational"

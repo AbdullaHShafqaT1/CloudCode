@@ -118,8 +118,9 @@ class TestNodeCoreModuleIntegration(unittest.TestCase):
     def test_06_node_link_dispatch(self):
         """NodeLink handles remote dispatch request."""
         res = NodeLink.dispatch_remote("test_endpoint", {"action": "ping"})
-        self.assertIn("job_id", res)
-        self.assertIn(res.get("status"), ["submitted", "ESTABLISHED", "success"])
+        self.assertEqual(res.get("status"), "error")
+        self.assertIn("explicit remote endpoint", res["error"])
+        self.assertNotIn("job_id", res)
 
 
 class TestNodeCoreOrchestrator(unittest.TestCase):
@@ -199,6 +200,8 @@ class TestCloudLLMConfiguration(unittest.TestCase):
 
     def test_11_live_cloudflare_endpoint_health(self):
         """Verifies the live Cloudflare tunnel returns a healthy status."""
+        if not __import__("os").environ.get("CLOUDCODE_RUN_LIVE_TESTS"):
+            self.skipTest("Live endpoint test requires CLOUDCODE_RUN_LIVE_TESTS; Step 3 is internal only")
         url = "https://min-referenced-celtic-fiscal.trycloudflare.com"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "CloudCode-IntegrationTest"})

@@ -1,0 +1,17 @@
+{
+  "started_at": "2026-09-21T07:00:47.528945+00:00",
+  "endpoint": "https://str-resolution-neck-varying.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "max_rounds": 50,
+  "cache_seed": null,
+  "mode": "LIVE",
+  "user_application_prompts": 1,
+  "workspace": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control",
+  "manual_application_edits": 0,
+  "entrypoint": "launcher_gui.run_autonomous_orchestrator (shared GUI/CLI worker)",
+  "prompt_file": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\benchmark_outputs\\step4-20260921-1156\\control-prompt.txt",
+  "checker_sha256": "5791fbab3f5278a05c7cf3de8f1d1d2142ef71efe96d1f031690f4df7fffede2",
+  "finished_at": "2026-09-21T07:07:33.831549+00:00",
+  "elapsed_seconds": 406.297,
+  "checker_unchanged": true
+}
