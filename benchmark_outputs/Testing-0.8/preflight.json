@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-09-22T04:55:30.252673+00:00",
+  "endpoint": "https://test-mason-rhode-warranties.trycloudflare.com",
+  "model": "qwen2.5-coder:32b",
+  "python": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Scripts\\python.exe",
+  "requests": [
+    {
+      "url": "https://test-mason-rhode-warranties.trycloudflare.com/v1/models",
+      "status": 200,
+      "elapsed_seconds": 0.8440000000409782,
+      "request": null,
+      "response": {
+        "status": "healthy",
+        "models": [
+          {
+            "id": "qwen2.5-coder:32b",
+            "object": "model"
+          }
+        ],
+        "data": [
+          {
+            "id": "qwen2.5-coder:32b",
+            "object": "model"
+          }
+        ]
+      }
+    }
+  ],
+  "ready": false,
+  "dependencies": {
+    "python-chess": "1.999",
+    "chess": "1.11.2",
+    "playwright": "1.63.0",
+    "pyautogen": "0.2.35",
+    "openai": "1.109.1"
+  },
+  "chess_module": "C:\\Users\\Acer\\Desktop\\projects\\LEGACYStudios\\cloud Bridge Projects\\CloudCode\\.cache\\diagnostic-venv\\Lib\\site-packages\\chess\\__init__.py",
+  "api_symbols": {
+    "Board": true,
+    "Move": true,
+    "Color": true,
+    "Status": true,
+    "CastleRights": false
+  },
+  "browser_version": "153.0.8010.12",
+  "error": "RuntimeError: 32B loaded-model provenance is absent or mismatched. Use the corrected bridge; an advertised alias alone does not qualify.",
+  "finished_at": "2026-09-22T04:55:33.154106+00:00"
+}

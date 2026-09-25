@@ -26,7 +26,8 @@ def main():
     with args.output.open('x', encoding='utf-8') as output, httpx.Client(timeout=120) as client:
         for name, messages, tokens in probes:
             data = {'model': 'qwen2.5-coder:32b', 'messages': messages, 'max_tokens': tokens, 'temperature': 0}
-            record = {'probe': name, 'started_at': datetime.now(timezone.utc).isoformat(), 'expected_marker': marker,
+            record = {'probe': name, 'endpoint': args.url.rstrip('/'),
+                      'started_at': datetime.now(timezone.utc).isoformat(), 'expected_marker': marker,
                       'request': data}
             start = time.monotonic()
             try:

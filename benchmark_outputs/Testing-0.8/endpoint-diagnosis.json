@@ -1,0 +1,57 @@
+{
+  "endpoint": "https://test-mason-rhode-warranties.trycloudflare.com",
+  "status": "BLOCKED_SERVING_CONTRACT",
+  "benchmark_started": false,
+  "benchmark_model_responses": 0,
+  "diagnostic_completion_requests": 3,
+  "actual_loaded_model": "unverified",
+  "findings": [
+    "Model listing supplies an alias only; loaded-model identity and parameter count are absent.",
+    "System-only marker was not returned.",
+    "Earlier-message marker was not recalled; an unrelated value was invented.",
+    "A max_tokens=1 request returned twenty English number words.",
+    "Usage exactly equals whitespace-word counts for the final user message and response."
+  ],
+  "checks": [
+    {
+      "probe": "system_message",
+      "expected_marker": "CC_bec514ac23",
+      "reply": "Two plus two equals four.",
+      "reported_usage": {
+        "prompt_tokens": 5,
+        "completion_tokens": 5,
+        "total_tokens": 10
+      },
+      "finish_reason": "stop",
+      "marker_received": false,
+      "requested_max_tokens": 32
+    },
+    {
+      "probe": "conversation_memory",
+      "expected_marker": "CC_bec514ac23",
+      "reply": "The session password is: 1234567890",
+      "reported_usage": {
+        "prompt_tokens": 8,
+        "completion_tokens": 5,
+        "total_tokens": 13
+      },
+      "finish_reason": "stop",
+      "marker_received": false,
+      "requested_max_tokens": 32
+    },
+    {
+      "probe": "one_token_limit",
+      "expected_marker": null,
+      "reply": "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty",
+      "reported_usage": {
+        "prompt_tokens": 14,
+        "completion_tokens": 20,
+        "total_tokens": 34
+      },
+      "finish_reason": "stop",
+      "marker_received": null,
+      "requested_max_tokens": 1
+    }
+  ],
+  "required_to_continue": "Apply corrected bridge to a runtime with actual 32B weights, then supply its fresh endpoint."
+}

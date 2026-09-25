@@ -1,0 +1,8 @@
+{
+  "endpoint": "https://test-mason-rhode-warranties.trycloudflare.com",
+  "script": "benchmarks/probe_model_contract.py",
+  "output": "benchmark_outputs/Testing-0.8/serving-contract-probes.jsonl",
+  "console_log": ".cache/mission-serving-probes-0.8.log",
+  "started_at": "2026-09-22T04:56:08.712534+00:00",
+  "record_basis": "Explicit --url argument of the executed command; recorded after execution without altering raw probe rows."
+}

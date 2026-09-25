@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import zipfile
 from urllib.parse import urlsplit
@@ -34,6 +35,50 @@ def digest(path):
 
 def save(path, value):
     path.write_text(json.dumps(value, indent=2, default=str), encoding='utf-8')
+
+
+def snapshot(workspace):
+    return {p.relative_to(workspace).as_posix(): digest(p) for p in workspace.rglob('*')
+            if p.is_file() and not any(part.startswith('.') or part in {'__pycache__', 'nodelog_data'}
+                                      for part in p.relative_to(workspace).parts) and p.suffix != '.bak'}
+
+
+def assess_workspace(checker, workspace, out):
+    from node_core.tools import NodePulse
+    from node_core.workflow import command_output, python_command
+    before = snapshot(workspace)
+    # NodePulse owns the whole child process tree, including application servers
+    # and Chromium descendants when the checker times out.
+    measured = NodePulse.execute_command(
+        python_command(str(ROOT / 'benchmarks' / 'measure_chess.py'), str(checker),
+                       str(workspace), str(out / 'independent.json')),
+        cwd=str(workspace), timeout=180)
+    save(out / 'independent-process.json', measured)
+    (out / 'independent.log').write_text(command_output(measured), encoding='utf-8')
+    try:
+        independent = json.loads((out / 'independent.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError) as exc:
+        independent = {'passed': False, 'tests': {}, 'unchanged': False, 'error': str(exc)}
+    completed = measured.get('status') in {'success', 'error'} and measured.get('exit_code') in {0, 1}
+    if not completed:
+        independent.update(passed=False, unchanged=False, error='Independent measurement did not finish')
+    if measured.get('exit_code') != 0:
+        independent['passed'] = False
+    # Verify all final modules, not the last workflow check (which can be partial
+    # or belong to an earlier snapshot).
+    with tempfile.TemporaryDirectory(prefix='chess-final-imports-') as cache:
+        imports = NodePulse.execute_command(
+            python_command('-c', "import importlib; " + '; '.join(
+                f"importlib.import_module({name!r})" for name in ('chess_logic', 'chess_gui', 'main'))),
+            cwd=str(workspace), timeout=15,
+            env={'PYTHONPYCACHEPREFIX': cache, 'PYTHONDONTWRITEBYTECODE': '1'})
+    save(out / 'final-imports.json', imports)
+    imports_passed = imports.get('status') == 'success' and imports.get('exit_code') == 0
+    independent['unchanged'] = independent.get('unchanged', False) and before == snapshot(workspace)
+    if not independent['unchanged']:
+        independent['passed'] = False
+    save(out / 'independent.json', independent)
+    return independent, imports_passed
 
 
 def validate_model_provenance(models):
@@ -228,34 +273,37 @@ def main():
     try:
         result = launcher_gui.run_autonomous_orchestrator(
             workspace_root=str(workspace), base_url=args.url, model=MODEL,
-            task_prompt=prompt, max_rounds=50, acceptance=acceptance)
+            task_prompt=prompt, max_rounds=50, acceptance=acceptance,
+            should_stop=lambda: (out / 'STOP').exists())
+        save(out / 'result.json', result)
+    except (Exception, KeyboardInterrupt) as exc:
+        result = {'status': 'CANCELLED' if isinstance(exc, KeyboardInterrupt) else 'FAILED',
+                  'rounds': sum(1 for _ in (out / 'http.jsonl').open()) if (out / 'http.jsonl').exists() else 0,
+                  'termination_reason': f'{type(exc).__name__}: {exc}', 'remaining_requirements': [str(exc)]}
         save(out / 'result.json', result)
     finally:
         launcher_gui.create_cloud_llm_config, httpx.Client.send = factory, send
         NodeLog.remove_listener(event)
-    with (out / 'independent.log').open('w', encoding='utf-8') as log:
-        try:
-            measured = subprocess.run([sys.executable, str(ROOT / 'benchmarks' / 'measure_chess.py'),
-                                      str(checker), str(workspace), str(out / 'independent.json')],
-                                     cwd=workspace, stdout=log, stderr=subprocess.STDOUT, timeout=180)
-            independent = json.loads((out / 'independent.json').read_text(encoding='utf-8'))
-        except (subprocess.TimeoutExpired, OSError, ValueError) as exc:
-            independent = {'passed': False, 'tests': {}, 'unchanged': False, 'error': str(exc)}
-            save(out / 'independent.json', independent)
-    imports = [c for c in result.get('commands', []) if c.get('kind') == 'imports']
-    imports_passed = bool(imports and imports[-1].get('exit_code') == 0)
+    independent, imports_passed = assess_workspace(checker, workspace, out)
     unchanged = (independent.get('unchanged', False) and digest(checker) == meta['checker_sha256']
                  and digest(checker_source) == meta['checker_sha256'] and digest(prompt_source) == meta['prompt_sha256'])
     matrix = requirement_matrix(independent['tests'], imports_passed, unchanged)
     save(out / 'requirements.json', matrix)
     browser = next((v['status'] for k, v in independent['tests'].items()
                     if k.endswith('test_17_18_real_browser_playthrough_and_launch')), 'unverified')
+    if not unchanged:
+        browser = 'unverified: integrity check failed'
+    failures = list(result.get('remaining_requirements', []))
+    if not unchanged:
+        failures.append('Prompt/checker integrity or final workspace stability check failed')
+    if independent.get('error'):
+        failures.append(independent['error'])
     meta.update(finished_at=now(), elapsed_seconds=time.monotonic() - started,
-                status=result['status'], responses=result['rounds'], generated_files=result['files_actual'],
-                independent_acceptance=independent['passed'], browser_result=browser,
+                status=result['status'], responses=result.get('rounds', 0), generated_files=snapshot(workspace),
+                independent_acceptance=bool(independent['passed'] and unchanged), browser_result=browser,
                 launch_result='verified' if browser == 'passed' else 'see independent.log',
                 functional_completion=matrix, checker_and_prompt_unchanged=unchanged,
-                failure_causes=result.get('remaining_requirements', []))
+                failure_causes=failures)
     save(out / 'metadata.json', meta)
     print(json.dumps({'status': result['status'], 'functional': matrix['percent'], 'evidence': str(out)}), flush=True)
     return 0 if matrix['percent'] >= 70 and unchanged else 1

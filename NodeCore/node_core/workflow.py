@@ -356,6 +356,7 @@ class TaskWorkflow:
         if test_file and self.path(test_file).is_file():
             with tempfile.TemporaryDirectory(prefix="cloudcode-check-") as evidence_dir:
                 evidence = Path(evidence_dir) / "tests.json"
+                command_index = len(self.commands)
                 test = self.execute(python_command("-I", str(Path(__file__).with_name("verification_runner.py")),
                                     str(self.workspace), str(evidence)), "tests")
                 try:
@@ -365,7 +366,8 @@ class TaskWorkflow:
                 if (not self.passed(test) or measured.get("tests_run", 0) < 1
                         or not measured.get("successful") or measured.get("skipped", 0)):
                     errors.append("Generated test suite must run at least one test, with no failures or skips:\n" + command_output(test))
-                self.commands[-1]["test_result"] = measured
+                if len(self.commands) > command_index:
+                    self.commands[command_index]["test_result"] = measured
         elif not file_errs or test_file not in [e.split(":")[0] for e in file_errs]:
             # Test file missing but not yet reported via file_errs
             if test_file and not self.path(test_file).is_file():

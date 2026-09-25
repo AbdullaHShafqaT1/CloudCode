@@ -1,0 +1,267 @@
+diff --git a/NodeCore/node_core/workflow.py b/NodeCore/node_core/workflow.py
+index 09b1dcb..89805a1 100644
+--- a/NodeCore/node_core/workflow.py
++++ b/NodeCore/node_core/workflow.py
+@@ -356,6 +356,7 @@ class TaskWorkflow:
+         if test_file and self.path(test_file).is_file():
+             with tempfile.TemporaryDirectory(prefix="cloudcode-check-") as evidence_dir:
+                 evidence = Path(evidence_dir) / "tests.json"
++                command_index = len(self.commands)
+                 test = self.execute(python_command("-I", str(Path(__file__).with_name("verification_runner.py")),
+                                     str(self.workspace), str(evidence)), "tests")
+                 try:
+@@ -365,7 +366,8 @@ class TaskWorkflow:
+                 if (not self.passed(test) or measured.get("tests_run", 0) < 1
+                         or not measured.get("successful") or measured.get("skipped", 0)):
+                     errors.append("Generated test suite must run at least one test, with no failures or skips:\n" + command_output(test))
+-                self.commands[-1]["test_result"] = measured
++                if len(self.commands) > command_index:
++                    self.commands[command_index]["test_result"] = measured
+         elif not file_errs or test_file not in [e.split(":")[0] for e in file_errs]:
+             # Test file missing but not yet reported via file_errs
+             if test_file and not self.path(test_file).is_file():
+diff --git a/NodeCore/test_mission_reliability.py b/NodeCore/test_mission_reliability.py
+index 018f43a..6e85086 100644
+--- a/NodeCore/test_mission_reliability.py
++++ b/NodeCore/test_mission_reliability.py
+@@ -135,3 +135,77 @@ def test_benchmark_rejects_model_label_without_loaded_provenance():
+         validate_model_provenance([{**truthful, 'parameter_count': 3_000_000_000}])
+     with pytest.raises(RuntimeError, match='output limit'):
+         validate_model_provenance([{**truthful, 'max_output_tokens': 1000}])
++
++
++@pytest.mark.parametrize('prior_command', [False, True])
++def test_cancel_before_test_execution_never_corrupts_command_evidence(tmp_path, prior_command):
++    w = workflow(tmp_path, should_stop=lambda: True)
++    (tmp_path / 'test_app.py').write_text('import unittest\nclass T(unittest.TestCase):\n def test_one(self): self.assertTrue(True)')
++    if prior_command:
++        w.commands.append({'kind': 'prior', 'output': 'untouched'})
++    w.verify()
++    assert w.status == 'CANCELLED'
++    assert w.commands == ([{'kind': 'prior', 'output': 'untouched'}] if prior_command else [])
++
++
++def test_import_credit_requires_every_final_application_module(tmp_path, monkeypatch):
++    from benchmarks.run_chess_mission import assess_workspace
++    from node_core.tools import NodePulse
++    workspace, out = tmp_path / 'ws', tmp_path / 'out'
++    workspace.mkdir(); out.mkdir()
++    (workspace / 'chess_logic.py').write_text('def value(): return 1')
++    (workspace / 'chess_gui.py').write_text('from chess_logic import value')
++    # main.py deliberately missing; the workflow's partial smoke would pass.
++    (out / 'independent.json').write_text(json.dumps({'passed': False, 'unchanged': True, 'tests': {}}))
++    execute = NodePulse.execute_command
++    def observed(command, **kwargs):
++        if 'measure_chess.py' in command:
++            assert kwargs['timeout'] == 180
++            return {'status': 'error', 'exit_code': 1}
++        return execute(command, **kwargs)
++    monkeypatch.setattr(NodePulse, 'execute_command', observed)
++    _, imports_passed = assess_workspace(out / 'checker.py', workspace, out)
++    assert not imports_passed
++    assert 'main' in (out / 'final-imports.json').read_text()
++
++
++def test_timed_out_measurement_cannot_retain_pass_evidence(tmp_path, monkeypatch):
++    from benchmarks.run_chess_mission import assess_workspace
++    from node_core.tools import NodePulse
++    workspace, out = tmp_path / 'ws', tmp_path / 'out'
++    workspace.mkdir(); out.mkdir()
++    (out / 'independent.json').write_text(json.dumps({'passed': True, 'unchanged': True, 'tests': {}}))
++    monkeypatch.setattr(NodePulse, 'execute_command', lambda *a, **kw: {'status': 'timeout', 'exit_code': -1})
++    measured, imports = assess_workspace(out / 'checker.py', workspace, out)
++    assert not measured['passed'] and not measured['unchanged'] and not imports
++
++
++def test_setup_failure_is_preserved_in_final_benchmark_metadata(tmp_path, monkeypatch):
++    from benchmarks import run_chess_mission as mission
++    from types import SimpleNamespace
++    import launcher_gui
++    original = tmp_path / 'original'; original.mkdir()
++    (original / 'chess-prompt.txt').write_text('Original fixture task')
++    (original / 'chess_acceptance.py').write_text('# independent fixture')
++    (tmp_path / 'orchestrator_config.json').write_text('{}')
++    monkeypatch.setattr(mission, 'ROOT', tmp_path)
++    monkeypatch.setattr(mission, 'ORIGINAL', original)
++    monkeypatch.setattr(mission, 'preflight', lambda *a: {'ready': True})
++    monkeypatch.setattr(mission.subprocess, 'run', lambda *a, **kw: SimpleNamespace(stdout=b''))
++    monkeypatch.setattr(mission.subprocess, 'check_output', lambda *a, **kw: 'fixture-commit')
++    monkeypatch.setattr(mission, 'assess_workspace', lambda *a: ({'passed': False, 'unchanged': True, 'tests': {}}, False))
++    monkeypatch.setattr(launcher_gui, 'run_autonomous_orchestrator', lambda **kw: {
++        'status': 'FAILED', 'rounds': 0, 'remaining_requirements': ['setup failure']})
++    monkeypatch.setattr(sys, 'argv', ['runner', '--url', 'https://example.invalid', '--reason', 'fixture',
++                                     '--benchmark-root', str(tmp_path / 'Tests')])
++    assert mission.main() == 1
++    metadata = json.loads((tmp_path / 'benchmark_outputs/Testing-0.1/metadata.json').read_text())
++    assert metadata['status'] == 'FAILED' and metadata['generated_files'] == {}
++    assert not metadata['independent_acceptance']
++
++
++def test_browser_pass_does_not_claim_unchecked_unicode_or_visible_winner():
++    matrix = requirement_matrix({'suite.test_17_18_real_browser_playthrough_and_launch': {'status': 'passed'}})
++    rows = {row['requirement']: row['status'] for row in matrix['requirements']}
++    assert rows['All pieces rendered with Unicode chess symbols'] == 'unverified'
++    assert rows['Winner visibly identified in browser'] == 'unverified'
+diff --git a/benchmark_outputs/MISSION_INVESTIGATION.md b/benchmark_outputs/MISSION_INVESTIGATION.md
+index 027c693..7ecfffd 100644
+--- a/benchmark_outputs/MISSION_INVESTIGATION.md
++++ b/benchmark_outputs/MISSION_INVESTIGATION.md
+@@ -36,6 +36,12 @@ Skips: Windows chmod semantics; two explicitly opt-in live model tests; remote b
+ 
+ ## Measurement
+ 
+-`benchmarks/measure_chess.py` runs the original checker test bodies unchanged and records unittest outcomes, including failed subtests. A fixed matrix of 33 functional requirement groups is declared before generation. File presence receives no credit. A failed grouped browser test receives no partial credit, even if earlier interactions happened to work. Seven areas without sufficient checker coverage remain unverified in the denominator. Documentation and generated tests are recorded separately by the unchanged checker. The matrix is an explicit equal-weight approximation of functionality, not an assertion that all requirements have equal effort.
++`benchmarks/measure_chess.py` runs the original checker test bodies unchanged and records unittest outcomes, including failed subtests. The first matrix declared 33 functional requirement groups before generation, with six areas lacking checker coverage. File presence receives no credit. A failed grouped browser test receives no partial credit, even if earlier interactions happened to work. Review subsequently separated two additional unverified GUI requirements (Unicode symbols and visible winner) into a stricter 35-group version-2 matrix. The original Testing-0.7 measurement is retained, and its version-2 reassessment is saved separately. Documentation and generated tests are recorded separately by the unchanged checker. The matrix is an explicit equal-weight approximation of functionality, not an assertion that all requirements have equal effort.
+ 
+ No milestone is claimed until a fresh live run supplies evidence. Historical 15–20% estimates are not validated percentages and are not directly comparable with this matrix.
++
++## Confirmed external serving defects and final status
++
++Inspection of the user-supplied Colab notebook confirmed that it loads Qwen2.5-Coder-3B-Instruct, advertises 32B, retains only the last user message, hardcodes 1,000 output tokens, and fabricates token/finish metadata. Live diagnostic requests independently reproduced missing system/history behavior and a 20-word response despite `max_tokens=1`. Testing-0.7 was stopped and disqualified after ten completed responses. Its unchanged checker ran all 20 methods; only check detection and the tested fifty-move/insufficient-material positions passed.
++
++Final reviewed local suite: **553 passed, 5 skipped, 64 warnings, 50.47 seconds**, `.cache/mission-reviewed-full-suite.log`; `git diff --check` clean. The added warning concerns Starlette's TestClient, installed in the isolated environment to exercise the bridge's real HTTP routes. See `MISSION_STATUS_REPORT.md` for the external blocker, prepared correction, complete evidence and resume procedure. The final bridge and feedback improvements have not yet had a qualifying actual-32B live benchmark.
+diff --git a/benchmarks/measure_chess.py b/benchmarks/measure_chess.py
+index 2f221b7..65dc9d7 100644
+--- a/benchmarks/measure_chess.py
++++ b/benchmarks/measure_chess.py
+@@ -31,11 +31,13 @@ REQUIREMENTS = [
+     ("Fifty-move and insufficient-material draws", "test_draw_handling"),
+     ("Claimable repetition draw", None),
+     ("Real documented CLI launch", "test_17_18_real_browser_playthrough_and_launch"),
+-    ("Visible 8x8 alternating board and 32 Unicode pieces", "test_17_18_real_browser_playthrough_and_launch"),
++    ("Visible 8x8 alternating board and 32 pieces", "test_17_18_real_browser_playthrough_and_launch"),
++    ("All pieces rendered with Unicode chess symbols", None),
+     ("Selection and legal-destination highlighting", "test_17_18_real_browser_playthrough_and_launch"),
+     ("Browser two-player moves, capture and turn updates", "test_17_18_real_browser_playthrough_and_launch"),
+     ("Browser new game resets position", "test_17_18_real_browser_playthrough_and_launch"),
+-    ("Browser checkmate and winner", "test_17_18_real_browser_playthrough_and_launch"),
++    ("Browser checkmate status", "test_17_18_real_browser_playthrough_and_launch"),
++    ("Winner visibly identified in browser", None),
+     ("Browser promotion choice and draw display", "test_17_18_real_browser_playthrough_and_launch"),
+     ("Browser check and stalemate displays", None),
+     ("Piece accessible labels and two-player instructions", None),
+@@ -90,7 +92,7 @@ def requirement_matrix(records, imports_passed=False, unchanged=True):
+     rows = [{"requirement": name, "status": "verified" if unchanged and check in passed else "unverified",
+              "evidence": check if unchanged and check in passed else None} for name, check in REQUIREMENTS]
+     count = sum(row['status'] == 'verified' for row in rows)
+-    return {"requirements": rows, "verified": count, "total": len(rows),
++    return {"matrix_version": 2, "requirements": rows, "verified": count, "total": len(rows),
+             "percent": round(100 * count / len(rows), 2),
+             "method": "Equal-weight functional requirement groups fixed before generation; no file-count credit. "
+                       "Failed grouped tests receive no partial credit. Documentation/generated tests reported separately."}
+diff --git a/benchmarks/run_chess_mission.py b/benchmarks/run_chess_mission.py
+index 510d8de..6d1b0c8 100644
+--- a/benchmarks/run_chess_mission.py
++++ b/benchmarks/run_chess_mission.py
+@@ -12,6 +12,7 @@ from pathlib import Path
+ import re
+ import subprocess
+ import sys
++import tempfile
+ import time
+ import zipfile
+ from urllib.parse import urlsplit
+@@ -36,6 +37,50 @@ def save(path, value):
+     path.write_text(json.dumps(value, indent=2, default=str), encoding='utf-8')
+ 
+ 
++def snapshot(workspace):
++    return {p.relative_to(workspace).as_posix(): digest(p) for p in workspace.rglob('*')
++            if p.is_file() and not any(part.startswith('.') or part in {'__pycache__', 'nodelog_data'}
++                                      for part in p.relative_to(workspace).parts) and p.suffix != '.bak'}
++
++
++def assess_workspace(checker, workspace, out):
++    from node_core.tools import NodePulse
++    from node_core.workflow import command_output, python_command
++    before = snapshot(workspace)
++    # NodePulse owns the whole child process tree, including application servers
++    # and Chromium descendants when the checker times out.
++    measured = NodePulse.execute_command(
++        python_command(str(ROOT / 'benchmarks' / 'measure_chess.py'), str(checker),
++                       str(workspace), str(out / 'independent.json')),
++        cwd=str(workspace), timeout=180)
++    save(out / 'independent-process.json', measured)
++    (out / 'independent.log').write_text(command_output(measured), encoding='utf-8')
++    try:
++        independent = json.loads((out / 'independent.json').read_text(encoding='utf-8'))
++    except (OSError, ValueError) as exc:
++        independent = {'passed': False, 'tests': {}, 'unchanged': False, 'error': str(exc)}
++    completed = measured.get('status') in {'success', 'error'} and measured.get('exit_code') in {0, 1}
++    if not completed:
++        independent.update(passed=False, unchanged=False, error='Independent measurement did not finish')
++    if measured.get('exit_code') != 0:
++        independent['passed'] = False
++    # Verify all final modules, not the last workflow check (which can be partial
++    # or belong to an earlier snapshot).
++    with tempfile.TemporaryDirectory(prefix='chess-final-imports-') as cache:
++        imports = NodePulse.execute_command(
++            python_command('-c', "import importlib; " + '; '.join(
++                f"importlib.import_module({name!r})" for name in ('chess_logic', 'chess_gui', 'main'))),
++            cwd=str(workspace), timeout=15,
++            env={'PYTHONPYCACHEPREFIX': cache, 'PYTHONDONTWRITEBYTECODE': '1'})
++    save(out / 'final-imports.json', imports)
++    imports_passed = imports.get('status') == 'success' and imports.get('exit_code') == 0
++    independent['unchanged'] = independent.get('unchanged', False) and before == snapshot(workspace)
++    if not independent['unchanged']:
++        independent['passed'] = False
++    save(out / 'independent.json', independent)
++    return independent, imports_passed
++
++
+ def validate_model_provenance(models):
+     """The supplied bridge proved that an advertised name alone is insufficient."""
+     item = next((m for m in models if m.get('id') == MODEL), None)
+@@ -228,34 +273,37 @@ def main():
+     try:
+         result = launcher_gui.run_autonomous_orchestrator(
+             workspace_root=str(workspace), base_url=args.url, model=MODEL,
+-            task_prompt=prompt, max_rounds=50, acceptance=acceptance)
++            task_prompt=prompt, max_rounds=50, acceptance=acceptance,
++            should_stop=lambda: (out / 'STOP').exists())
++        save(out / 'result.json', result)
++    except (Exception, KeyboardInterrupt) as exc:
++        result = {'status': 'CANCELLED' if isinstance(exc, KeyboardInterrupt) else 'FAILED',
++                  'rounds': sum(1 for _ in (out / 'http.jsonl').open()) if (out / 'http.jsonl').exists() else 0,
++                  'termination_reason': f'{type(exc).__name__}: {exc}', 'remaining_requirements': [str(exc)]}
+         save(out / 'result.json', result)
+     finally:
+         launcher_gui.create_cloud_llm_config, httpx.Client.send = factory, send
+         NodeLog.remove_listener(event)
+-    with (out / 'independent.log').open('w', encoding='utf-8') as log:
+-        try:
+-            measured = subprocess.run([sys.executable, str(ROOT / 'benchmarks' / 'measure_chess.py'),
+-                                      str(checker), str(workspace), str(out / 'independent.json')],
+-                                     cwd=workspace, stdout=log, stderr=subprocess.STDOUT, timeout=180)
+-            independent = json.loads((out / 'independent.json').read_text(encoding='utf-8'))
+-        except (subprocess.TimeoutExpired, OSError, ValueError) as exc:
+-            independent = {'passed': False, 'tests': {}, 'unchanged': False, 'error': str(exc)}
+-            save(out / 'independent.json', independent)
+-    imports = [c for c in result.get('commands', []) if c.get('kind') == 'imports']
+-    imports_passed = bool(imports and imports[-1].get('exit_code') == 0)
++    independent, imports_passed = assess_workspace(checker, workspace, out)
+     unchanged = (independent.get('unchanged', False) and digest(checker) == meta['checker_sha256']
+                  and digest(checker_source) == meta['checker_sha256'] and digest(prompt_source) == meta['prompt_sha256'])
+     matrix = requirement_matrix(independent['tests'], imports_passed, unchanged)
+     save(out / 'requirements.json', matrix)
+     browser = next((v['status'] for k, v in independent['tests'].items()
+                     if k.endswith('test_17_18_real_browser_playthrough_and_launch')), 'unverified')
++    if not unchanged:
++        browser = 'unverified: integrity check failed'
++    failures = list(result.get('remaining_requirements', []))
++    if not unchanged:
++        failures.append('Prompt/checker integrity or final workspace stability check failed')
++    if independent.get('error'):
++        failures.append(independent['error'])
+     meta.update(finished_at=now(), elapsed_seconds=time.monotonic() - started,
+-                status=result['status'], responses=result['rounds'], generated_files=result['files_actual'],
+-                independent_acceptance=independent['passed'], browser_result=browser,
++                status=result['status'], responses=result.get('rounds', 0), generated_files=snapshot(workspace),
++                independent_acceptance=bool(independent['passed'] and unchanged), browser_result=browser,
+                 launch_result='verified' if browser == 'passed' else 'see independent.log',
+                 functional_completion=matrix, checker_and_prompt_unchanged=unchanged,
+-                failure_causes=result.get('remaining_requirements', []))
++                failure_causes=failures)
+     save(out / 'metadata.json', meta)
+     print(json.dumps({'status': result['status'], 'functional': matrix['percent'], 'evidence': str(out)}), flush=True)
+     return 0 if matrix['percent'] >= 70 and unchanged else 1

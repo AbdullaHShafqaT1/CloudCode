@@ -31,11 +31,13 @@ REQUIREMENTS = [
     ("Fifty-move and insufficient-material draws", "test_draw_handling"),
     ("Claimable repetition draw", None),
     ("Real documented CLI launch", "test_17_18_real_browser_playthrough_and_launch"),
-    ("Visible 8x8 alternating board and 32 Unicode pieces", "test_17_18_real_browser_playthrough_and_launch"),
+    ("Visible 8x8 alternating board and 32 pieces", "test_17_18_real_browser_playthrough_and_launch"),
+    ("All pieces rendered with Unicode chess symbols", None),
     ("Selection and legal-destination highlighting", "test_17_18_real_browser_playthrough_and_launch"),
     ("Browser two-player moves, capture and turn updates", "test_17_18_real_browser_playthrough_and_launch"),
     ("Browser new game resets position", "test_17_18_real_browser_playthrough_and_launch"),
-    ("Browser checkmate and winner", "test_17_18_real_browser_playthrough_and_launch"),
+    ("Browser checkmate status", "test_17_18_real_browser_playthrough_and_launch"),
+    ("Winner visibly identified in browser", None),
     ("Browser promotion choice and draw display", "test_17_18_real_browser_playthrough_and_launch"),
     ("Browser check and stalemate displays", None),
     ("Piece accessible labels and two-player instructions", None),
@@ -90,7 +92,7 @@ def requirement_matrix(records, imports_passed=False, unchanged=True):
     rows = [{"requirement": name, "status": "verified" if unchanged and check in passed else "unverified",
              "evidence": check if unchanged and check in passed else None} for name, check in REQUIREMENTS]
     count = sum(row['status'] == 'verified' for row in rows)
-    return {"requirements": rows, "verified": count, "total": len(rows),
+    return {"matrix_version": 2, "requirements": rows, "verified": count, "total": len(rows),
             "percent": round(100 * count / len(rows), 2),
             "method": "Equal-weight functional requirement groups fixed before generation; no file-count credit. "
                       "Failed grouped tests receive no partial credit. Documentation/generated tests reported separately."}

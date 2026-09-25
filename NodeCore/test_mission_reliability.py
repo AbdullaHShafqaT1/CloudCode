@@ -135,3 +135,77 @@ def test_benchmark_rejects_model_label_without_loaded_provenance():
         validate_model_provenance([{**truthful, 'parameter_count': 3_000_000_000}])
     with pytest.raises(RuntimeError, match='output limit'):
         validate_model_provenance([{**truthful, 'max_output_tokens': 1000}])
+
+
+@pytest.mark.parametrize('prior_command', [False, True])
+def test_cancel_before_test_execution_never_corrupts_command_evidence(tmp_path, prior_command):
+    w = workflow(tmp_path, should_stop=lambda: True)
+    (tmp_path / 'test_app.py').write_text('import unittest\nclass T(unittest.TestCase):\n def test_one(self): self.assertTrue(True)')
+    if prior_command:
+        w.commands.append({'kind': 'prior', 'output': 'untouched'})
+    w.verify()
+    assert w.status == 'CANCELLED'
+    assert w.commands == ([{'kind': 'prior', 'output': 'untouched'}] if prior_command else [])
+
+
+def test_import_credit_requires_every_final_application_module(tmp_path, monkeypatch):
+    from benchmarks.run_chess_mission import assess_workspace
+    from node_core.tools import NodePulse
+    workspace, out = tmp_path / 'ws', tmp_path / 'out'
+    workspace.mkdir(); out.mkdir()
+    (workspace / 'chess_logic.py').write_text('def value(): return 1')
+    (workspace / 'chess_gui.py').write_text('from chess_logic import value')
+    # main.py deliberately missing; the workflow's partial smoke would pass.
+    (out / 'independent.json').write_text(json.dumps({'passed': False, 'unchanged': True, 'tests': {}}))
+    execute = NodePulse.execute_command
+    def observed(command, **kwargs):
+        if 'measure_chess.py' in command:
+            assert kwargs['timeout'] == 180
+            return {'status': 'error', 'exit_code': 1}
+        return execute(command, **kwargs)
+    monkeypatch.setattr(NodePulse, 'execute_command', observed)
+    _, imports_passed = assess_workspace(out / 'checker.py', workspace, out)
+    assert not imports_passed
+    assert 'main' in (out / 'final-imports.json').read_text()
+
+
+def test_timed_out_measurement_cannot_retain_pass_evidence(tmp_path, monkeypatch):
+    from benchmarks.run_chess_mission import assess_workspace
+    from node_core.tools import NodePulse
+    workspace, out = tmp_path / 'ws', tmp_path / 'out'
+    workspace.mkdir(); out.mkdir()
+    (out / 'independent.json').write_text(json.dumps({'passed': True, 'unchanged': True, 'tests': {}}))
+    monkeypatch.setattr(NodePulse, 'execute_command', lambda *a, **kw: {'status': 'timeout', 'exit_code': -1})
+    measured, imports = assess_workspace(out / 'checker.py', workspace, out)
+    assert not measured['passed'] and not measured['unchanged'] and not imports
+
+
+def test_setup_failure_is_preserved_in_final_benchmark_metadata(tmp_path, monkeypatch):
+    from benchmarks import run_chess_mission as mission
+    from types import SimpleNamespace
+    import launcher_gui
+    original = tmp_path / 'original'; original.mkdir()
+    (original / 'chess-prompt.txt').write_text('Original fixture task')
+    (original / 'chess_acceptance.py').write_text('# independent fixture')
+    (tmp_path / 'orchestrator_config.json').write_text('{}')
+    monkeypatch.setattr(mission, 'ROOT', tmp_path)
+    monkeypatch.setattr(mission, 'ORIGINAL', original)
+    monkeypatch.setattr(mission, 'preflight', lambda *a: {'ready': True})
+    monkeypatch.setattr(mission.subprocess, 'run', lambda *a, **kw: SimpleNamespace(stdout=b''))
+    monkeypatch.setattr(mission.subprocess, 'check_output', lambda *a, **kw: 'fixture-commit')
+    monkeypatch.setattr(mission, 'assess_workspace', lambda *a: ({'passed': False, 'unchanged': True, 'tests': {}}, False))
+    monkeypatch.setattr(launcher_gui, 'run_autonomous_orchestrator', lambda **kw: {
+        'status': 'FAILED', 'rounds': 0, 'remaining_requirements': ['setup failure']})
+    monkeypatch.setattr(sys, 'argv', ['runner', '--url', 'https://example.invalid', '--reason', 'fixture',
+                                     '--benchmark-root', str(tmp_path / 'Tests')])
+    assert mission.main() == 1
+    metadata = json.loads((tmp_path / 'benchmark_outputs/Testing-0.1/metadata.json').read_text())
+    assert metadata['status'] == 'FAILED' and metadata['generated_files'] == {}
+    assert not metadata['independent_acceptance']
+
+
+def test_browser_pass_does_not_claim_unchecked_unicode_or_visible_winner():
+    matrix = requirement_matrix({'suite.test_17_18_real_browser_playthrough_and_launch': {'status': 'passed'}})
+    rows = {row['requirement']: row['status'] for row in matrix['requirements']}
+    assert rows['All pieces rendered with Unicode chess symbols'] == 'unverified'
+    assert rows['Winner visibly identified in browser'] == 'unverified'
